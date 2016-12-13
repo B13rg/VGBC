@@ -1,4 +1,7 @@
-//Template for egisters
+#include "opcodes.h"
+#include "flags.h"
+
+//Template for registers
 typedef union{
 	struct{
 		uint8_t lo;
@@ -35,24 +38,28 @@ void c_DMGCPU::OPCODE0x3e(){
 
 
 
-
-Counter = InterruptPeriod
-PC = InitialPC
-
-for(;;){
-	Opcode = Memory[PC++];
-	Counter -= Cycles[OpCode];
+int main(){
+	//Counter = InterruptPeriod
+	//PC = InitialPC
+	flags Flag;
+	for(;;){
+		Opcode = Memory[PC++];
+		Counter -= Cycles[OpCode];
 	
-	switch(Opcode){
-		case OpCode1: ;
-		//etc
-	}
+		switch(Opcode){
+			case OpCode1: ;
+			//etc
+		}
 
-	if(Counter <= 0){
-		// check for interrupts
-		// cyclic tasks
-		//
-		Counter += InterruptPeriod;
-		if(ExitRequired) break;
-	}
-} 
+		if(Counter <= 0){
+			// check for interrupts
+			// cyclic tasks
+			//
+			Counter += InterruptPeriod;
+			if(ExitRequired) break;
+		}
+	} 
+}
+
+
+
