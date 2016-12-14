@@ -303,7 +303,14 @@ void opCode0x1A(){	//LD A, (DE); 8
 	Registers.PC.word ++;
 }
 
-void opCode0x1B();//DEC DE; 8
+void opCode0x1B(){//DEC DE; 8
+	Registers.DE.word --;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void opCode0x1C(){	//INC E; 4
 	Registers.DE.lo ++;
 	
@@ -386,7 +393,47 @@ void opCode0x25(){	//DEC H; 4
 }
 
 void opCode0x26();//LD H, d8; 8
-void opCode0x27();//DAA; 4
+void opCode0x27(){	//DAA; 4
+	uint8_t value = Registers.AF.hi;
+	
+	//addition portion
+	if(!Flag.N){
+		if((value & 0x0F)  > 9)
+			value = value + 6;
+		if((value > 0x9F) || (Flag.C)){
+			value = value + 0x60;
+			Flag.C = 1;
+		}	else 
+			Flag.C = 0;
+	}
+	
+	//subtraction portion
+	if(Flag.N){
+		if((value & 0x0F)  > 9 || Flag.H){
+			value -= 6;
+			Flag.H = 1;
+		}	else
+			Flag.H = 0;
+		if((value > 0x9H) || Flag.C){
+			value -= 0x60;
+			Flag.C = 1;
+		}	else
+			Flag.C = 0;
+	}
+	
+	//final flag setting
+	Flag.H = 0;
+	Flag.Z = 0;
+	
+	if(value == 0)
+		Flag.Z = 1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+	
+}
+
 void opCode0x28();//JR Z, r8; 12/8
 void opCode0x29(){	//ADD HL, HL; 8
 	Flag.N = 0;
@@ -406,7 +453,14 @@ void opCode0x29(){	//ADD HL, HL; 8
 }
 
 void opCode0x2A();//LD A, (HL+); 8
-void opCode0x2B();//DEC HL; 8
+void opCode0x2B(){	//DEC HL; 8
+	Registers.HL.word --;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void opCode0x2C(){	//INC L; 4
 	Registers.HL.lo ++;
 	
@@ -519,7 +573,14 @@ void opCode0x39(){	//ADD HL, SP; 8
 	Registers.PC.word ++;
 }
 void opCode0x3A();//LD A, (HL-); 8
-void opCode0x3B();//DEC SP; 8
+void opCode0x3B(){	//DEC SP; 8
+	Registers.SP.word --;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void opCode0x3C();//INC A; 4
 
 void opCode0x3D(){	//DEC A; 4
