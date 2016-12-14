@@ -405,21 +405,18 @@ void opCode0x27(){	//DAA; 4
 			Flag.C = 1;
 		}	else 
 			Flag.C = 0;
-	}
-	
-	//subtraction portion
-	if(Flag.N){
+	} else {	//subtraction portion
 		if((value & 0x0F)  > 9 || Flag.H){
 			value -= 6;
-			Flag.H = 1;
-		}	else
-			Flag.H = 0;
+		}
 		if((value > 0x9H) || Flag.C){
 			value -= 0x60;
 			Flag.C = 1;
 		}	else
 			Flag.C = 0;
 	}
+	
+	Registers.AH.hi = value);
 	
 	//final flag setting
 	Flag.H = 0;
@@ -431,7 +428,6 @@ void opCode0x27(){	//DAA; 4
 	Clock.m = 1;
 	Clock.t = 4;
 	Registers.PC.word ++;
-	
 }
 
 void opCode0x28();//JR Z, r8; 12/8
@@ -492,7 +488,16 @@ void opCode0x2D(){	//DEC L; 4
 }
 
 void opCode0x2E();//LD L, d8; 8
-void opCode0x2F();//CPL; 4
+void opCode0x2F(){	//CPL; 4
+	Registers.AH.hi ^= 0xFF;
+	
+	Flag.N = 1;
+	Flag.H =1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
 
 void opCode0x30();//JR NC, r8; 12/8
 void opCode0x31(){	//LD SP, d16; 12
@@ -554,7 +559,16 @@ void opCode0x36(){	//LD (HL), d8; 12
 MEM->ReadByte(
 }
 
-void opCode0x37();//SCF; 4
+void opCode0x37(){	//SCF; 4
+	Flag.C = 1;
+	Flag.N = 0;
+	Flag.H = 0;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word = 1;
+}
+
 void opCode0x38();//JR C, r8; 12/8
 void opCode0x39(){	//ADD HL, SP; 8
 	Flag.N = 0;
@@ -606,7 +620,16 @@ void opCode0x3E(){	//LD A, d8; 8
 	Registers.PC.word += 2;
 }
 
-void opCode0x3F();//CCF; 4
+void opCode0x3F(){	//CCF; 4
+	Flag.C ^= 1;
+	
+	Flag.N = 0;
+	Flag.H =0;
+	
+	Clock.m = 1
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
 
 /************************************/
 void opCode0x40();//LD B, B; 4
