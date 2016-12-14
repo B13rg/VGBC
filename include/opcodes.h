@@ -275,7 +275,7 @@ private:
 	void opCode0xD0();//RET NC; 20/8
 	void opCode0xD1();//POP DE; 12
 	void opCode0xD2();//JP NC, a16; 16/12
-	void opCode0xD3();//BLANK
+	void opCode0xD3(){};//BLANK
 	void opCode0xD4();//CALL NC, a16; 24/12
 	void opCode0xD5();//PUSH DE; 16
 	void opCode0xD6();//SUB d8; 8
@@ -285,24 +285,24 @@ private:
 	void opCode0xDA();//JP C, a16; 16/12
 	void opCode0xDB();//BLANK
 	void opCode0xDC();//CALL C, a16; 24/12
-	void opCode0xDD();//BLANK
+	void opCode0xDD(){};//BLANK
 	void opCode0xDE();//SBC A, d8; 8
 	void opCode0xDF();//RST 18H; 16
 
 	void opCode0xE0();//LDH (a8), A; 12
 	void opCode0xE1();//POP HL; 12
 	void opCode0xE2();//LD (C), A; 8
-	void opCode0xE3();//BLANK
-	void opCode0xE4();//BLANK
+	void opCode0xE3(){};//BLANK
+	void opCode0xE4(){};//BLANK
 	void opCode0xE5();//PUSH HL; 16
 	void opCode0xE6();//AND d8; 8
 	void opCode0xE7();//RST 20H; 16
 	void opCode0xE8();//ADD SP, r8; 16
 	void opCode0xE9();//JP (HL); 4
 	void opCode0xEA();//LD (a16), A; 16
-	void opCode0xEB();//BLANK
-	void opCode0xEC();//BLANK
-	void opCode0xED();//BLANK
+	void opCode0xEB(){};//BLANK
+	void opCode0xEC(){};//BLANK
+	void opCode0xED(){};//BLANK
 	void opCode0xEE();//XOR d8; 8
 	void opCode0xEF();//RST 28H; 16
 
@@ -310,7 +310,7 @@ private:
 	void opCode0xF1();//POP AF; 12
 	void opCode0xF2();//LD A, (C); 8
 	void opCode0xF3();//DI; 4
-	void opCode0xF4();//BLANK
+	void opCode0xF4(){};//BLANK
 	void opCode0xF5();//PUSH AF; 16
 	void opCode0xF6();//OR d8; 8
 	void opCode0xF7();//RST 30H; 16
@@ -318,8 +318,8 @@ private:
 	void opCode0xF9();//LD SP, HL; 8
 	void opCode0xFA();//LD A, (a16); 16
 	void opCode0xFB();//EI; 4
-	void opCode0xFC();//BLANK
-	void opCode0xFD();//BLANK
+	void opCode0xFC(){};//BLANK
+	void opCode0xFD(){};//BLANK
 	void opCode0xFE();//CP d8; 8
 	void opCode0xFF();//RST 38H; 16
 

@@ -117,7 +117,7 @@ void opCode0x07(){ //RLCA; 4
 }
 
 void opCode0x08(){ //LD (a16), SP; 20
-	MEM->Writeword(Registers.SP.word, MEM->ReadWord(Registers.PC.word++));
+	MEM->Writeword(Registers.SP.word, MEM->ReadWord(Registers.PC.word + 1));
 	
 	Clock.m = 3;
 	Clock.t = 20;
@@ -832,15 +832,40 @@ void opCode0xBF();//CP A; 4
 
 void opCode0xC0();//RET NZ; 20/8
 void opCode0xC1();//POP BC; 12
-void opCode0xC2();//JP NZ, a16; 16
-void opCode0xC3();//JP a16; 16
+void opCode0xC2(){	//JP NZ, a16; 16
+	Clock.t = 12;
+	
+	if(Flag.Z == 0){
+		Registers.PC.word = Mem->Readword(Registers.PC.word + 1);
+		Clock.t = 16;
+	}
+	
+	Clock.m = 3
+}
+
+void opCode0xC3(){	//JP a16; 16
+	Registers.PC.word = MEM->ReadWord(Registers.PC.word+1);
+	Clock.m = 3;
+	Clock.t = 16;
+}
+
 void opCode0xC4();//CALL NZ, a16
 void opCode0xC5();//PUSH BC
 void opCode0xC6();//ADD A, d8
 void opCode0xC7();//RST 00H; 16
 void opCode0xC8();//RET Z; 20/8
 void opCode0xC9();//RET; 16
-void opCode0xCA();//JP Z, a16; 16/12
+void opCode0xCA(){	//JP Z, a16; 16/12
+	Clock.t = 12;
+	
+	if(Flag.Z == 1){
+		Registers.PC.word = Mem->Readword(Registers.PC.word + 1);
+		Clock.t = 16;
+	}
+	
+	Clock.m = 3
+}
+
 void opCode0xCB();//PREFIX CB; 4
 void opCode0xCC();//CALL Z, a16; 24/12
 void opCode0xCD();//CALL a16; 24
@@ -849,26 +874,46 @@ void opCode0xCF();//RST 08H; 16
 
 void opCode0xD0();//RET NC; 20/8
 void opCode0xD1();//POP DE; 12
-void opCode0xD2();//JP NC, a16; 16/12
-void opCode0xD3();//BLANK
+void opCode0xD2(){	//JP NC, a16; 16/12
+	Clock.t = 12;
+	
+	if(Flag.C == 0){
+		Registers.PC.word = Mem->Readword(Registers.PC.word + 1);
+		Clock.t = 16;
+	}
+	
+	Clock.m = 3
+}
+
+//void opCode0xD3();//BLANK
 void opCode0xD4();//CALL NC, a16; 24/12
 void opCode0xD5();//PUSH DE; 16
 void opCode0xD6();//SUB d8; 8
 void opCode0xD7();//RST 10H; 16
 void opCode0xD8();//RET C; 20/8
 void opCode0xD9();//RETI; 16
-void opCode0xDA();//JP C, a16; 16/12
-void opCode0xDB();//BLANK
+void opCode0xDA(){	//JP C, a16; 16/12
+	Clock.t = 12;
+	
+	if(Flag.C == 1){
+		Registers.PC.word = Mem->Readword(Registers.PC.word + 1);
+		Clock.t = 16;
+	}
+	
+	Clock.m = 3
+}
+
+//void opCode0xDB();//BLANK
 void opCode0xDC();//CALL C, a16; 24/12
-void opCode0xDD();//BLANK
+//void opCode0xDD();//BLANK
 void opCode0xDE();//SBC A, d8; 8
 void opCode0xDF();//RST 18H; 16
 
 void opCode0xE0();//LDH (a8), A; 12
 void opCode0xE1();//POP HL; 12
 void opCode0xE2();//LD (C), A; 8
-void opCode0xE3();//BLANK
-void opCode0xE4();//BLANK
+//void opCode0xE3();//BLANK
+//void opCode0xE4();//BLANK
 void opCode0xE5();//PUSH HL; 16
 void opCode0xE6();//AND d8; 8
 void opCode0xE7();//RST 20H; 16
@@ -892,9 +937,9 @@ void opCode0xE8(){	//ADD SP, r8; 16
 
 void opCode0xE9();//JP (HL); 4
 void opCode0xEA();//LD (a16), A; 16
-void opCode0xEB();//BLANK
-void opCode0xEC();//BLANK
-void opCode0xED();//BLANK
+//void opCode0xEB();//BLANK
+//void opCode0xEC();//BLANK
+//void opCode0xED();//BLANK
 void opCode0xEE();//XOR d8; 8
 void opCode0xEF();//RST 28H; 16
 
@@ -902,7 +947,7 @@ void opCode0xF0();//LDH A, (a8); 12
 void opCode0xF1();//POP AF; 12
 void opCode0xF2();//LD A, (C); 8
 void opCode0xF3();//DI; 4
-void opCode0xF4();//BLANK
+//void opCode0xF4();//BLANK
 void opCode0xF5();//PUSH AF; 16
 void opCode0xF6();//OR d8; 8
 void opCode0xF7();//RST 30H; 16
@@ -910,8 +955,8 @@ void opCode0xF8();//LD HL, SP+r8; 12
 void opCode0xF9();//LD SP, HL; 8
 void opCode0xFA();//LD A, (a16); 16
 void opCode0xFB();//EI; 4
-void opCode0xFC();//BLANK
-void opCode0xFD();//BLANK
+//void opCode0xFC();//BLANK
+//void opCode0xFD();//BLANK
 void opCode0xFE();//CP d8; 8
 void opCode0xFF();//RST 38H; 16
 
