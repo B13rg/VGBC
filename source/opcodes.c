@@ -23,7 +23,17 @@ for(;;){
 
 void (c_DMGCPU::*OPCodes[0xFF])
 
-//void opCode0x##(); Function; Cycles
+/* Opcode Function Structure
+void opCode0x##(){; Function; Cycles
+	Do the opcode function
+
+	Set flags 
+
+	Set instruction size
+	Set instruction cycles
+	Increment instruction pointer
+} */
+
 void opCode0x00(){//NOP; 4
 	Clock.m = 1;	//instruction size ??
 	Clock.t = 4;	//Number of cycles
@@ -31,138 +41,489 @@ void opCode0x00(){//NOP; 4
 }
 
 void opCode0x01(){ //LD BC, d16; 12
+	Registers.BC.word = MEM->Readword(Registers.PC.word + 1);
+
 	Clock.m = 3;
 	Clock.t = 12;
 	Registers.PC.word += 3;
-
-	Registers.BC.word = MEM->Readword(Registers.PC.word + 1);
-
 }
 
 void opCode0x02(){ //LD (BC), A; 8
+	MEM->Writeword(Registers.BC.word, Registers.AF.hi);
+
 	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word ++;
-
-	MEM->Writeword(Registers.BC.word, Registers.AF.hi);
+	Registers.PC.word ++;	
 }
 
 void opCode0x03(){ //INC BC; 8
+	Registers.BC.word ++;
+
 	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word ++;
-
-	Registers.BC.word ++;
+	Registers.PC.word ++;	
 }
 
 void opCode0x04(){ //INC B; 4
-	Clock.m = 1;
-	Clock.t = 4;
-	Registers.PC.word ++;
-
 	Registers.BC.hi ++;
 
-	resetFlags();
+	Flag.N =0;
 
 	if(!Registers.BC.hi)
 		Flag.Z = 1;
 	if(Registers.BC.hi & 0xF)
 		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
 }
 
 void opCode0x05(){ //DEC B; 4
-		Clock.m = 1;
-	Clock.t = 4;
-	Registers.PC.word ++;
-
 	Registers.BC.hi --;
-
-	resetFlags();
 
 	Flag.N = 1;
 	if(!Registers.BC.hi)
 		Flag.Z = 1;
 	if(Registers.BC.hi & 0xF)
 		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;	
 }
 
 void opCode0x06(){ //LD B, d8; 8
-	Register.BC.hi = MEM->ReadByte(Registers.PC.word + 1);
+	Registers.BC.hi = MEM->ReadByte(Registers.PC.word + 1);
+	
 	Clock.m =2;
 	Clock.t = 8;
 	Registers.PC.word += 2;
 }
 
 void opCode0x07(){ //RLCA; 4
-	/*TODO*/
-	uint8_t carryi = Flag.C ? 1 : 0);
+	// Needs to be tested
+	uint8_t carryi = (Registers.AF.hi >> 7) & 1;	//check if Carry flag is set
 
-	resetFlags();
+	resetFlags();	//reset all flags
 
-	Registers.AF.hi = (Register.AF.hi << 1);
+	Registers.AF.hi = (Registers.AF.hi << 1);	//shift bits left 1 spot
 	Registers.AF.hi |= carryi;
-	Flag.C = Register.AF.hi & 0x01;
+	Flag.C = carryi;
+	
+	Clock.m = 1;
+	Clock.c = 4;
+	Registers.PC.word ++;
 }
 
-void opCode0x08(); //LD (a16), SP; 20
-void opCode0x09(); //ADD HL, BC; 8
-void opCode0x0A(); //LD A, (BC); 8
-void opCode0x0B(); //DEC BC; 8
-void opCode0x0C(); //INC C; 4
-void opCode0x0D(); //DEC C; 4
-void opCode0x0E(); //LD C, d8; 8
-void opCode0x0F(); //RRCA; 4
+void opCode0x08(){ //LD (a16), SP; 20
+	MEM->Writeword(Registers.SP.word, MEM->ReadWord(Registers.PC.word++));
+	
+	Clock.m = 3;
+	Clock.t = 20;
+	Registers.PC.word += 3;
+}
 
-void opCode0x10();//STOP 0; 4
-void opCode0x11();//LD DE, D16; 12
-void opCode0x12();//LD (DE), A; 8
-void opCode0x13();//INC DE; 8
-void opCode0x14();//INC D; 4
-void opCode0x15();//DEC D; 4
+void opCode0x09(){	//ADD HL, BC; 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.HL.word & 0x0FFF)+(Registers.BC.word & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.HL.word + Registers.BC.word ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.HL.word += Registers.BC.word;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x0A(){ //LD A, (BC); 8
+	Registers.AF.hi = MEM->ReadByte(Registers.BC.word);
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x0B(){ //DEC BC; 8
+	Registers.BC.word --;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x0C(){ //INC C; 4
+	Registers.BC.lo ++;
+	
+	Flag.N = 0;
+	
+	if(Registers.BC.lo == 0)
+		Flag.Z =1;
+	if(Registers.BC.lo > 0x0FFF)
+		Flag.H = 1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x0D(){ //DEC C; 4
+	Registers.BC.lo --;
+	
+	Flag.N = 1;
+	
+	if(Registers.BC.lo == 0)
+		Flag.Z =1;
+	if(Registers.BC.lo > 0x0FFF)
+		Flag.C = 1;
+	
+	Clock.m = 1;
+	Clock.t 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x0E(){ //LD C, d8; 8
+	Registers.BC.lo = MEM->ReadByte(Registers.PC.word + 1);
+	
+	Clock.m =2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
+
+void opCode0x0F(){ //RRCA; 4
+	uint8_t carryi = (Registers.AF.hi >> 0) & 1;	//get 7th bit of A register
+
+	resetFlags();	//reset all flags
+
+	Registers.AF.hi = (Registers.AF.hi >>> 1);	//shift bits right 1 spot
+	Registers.AF.hi |= carryi;
+	Flag.C = carryi;
+	
+	Clock.m = 1;
+	Clock.c = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x10(){	//STOP 0; 4
+	while(Registers.AF.hi == 0 || MEM->ReadByte(0xFF00) == 0);
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	
+	if(MEM->ReadByte(Registers.PC.word + 1) == 0x00)
+		Registers.PC.word += 2;
+	else
+		Registers.PC.word ++;
+}
+
+void opCode0x11(){	//LD DE, D16; 12
+	Registers.DE.word = MEM->Readword(Registers.PC.word + 1);
+
+	Clock.m = 3;
+	Clock.t = 12;
+	Registers.PC.word += 3;
+}
+
+void opCode0x12(){	//LD (DE), A; 8
+	MEM->Writeword(Registers.DE.word, Registers.AF.hi);
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x13(){	//INC DE; 8
+	Registers.DE.word ++;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x14(){	//INC D; 4
+	Registers.DE.hi ++;
+	
+	Flag.N = 0;
+	
+	if(Registers.DE.hi == 0)
+		Flag.Z =1;
+	if(Registers.DE.hi > 0x0FFF)
+		Flag.H = 1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x15(){	//DEC D; 4
+	Registers.DE.hi --;
+
+	Flag.N = 1;
+	
+	if(!Registers.DE.hi)
+		Flag.Z = 1;
+	if(Registers.DE.hi & 0xF)
+		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
 void opCode0x16();//LD D, D8; 8
 void opCode0x17();//RLA; 4
 void opCode0x18();//JR r8; 12
-void opCode0x19();//ADD HL, DE; 8
-void opCode0x1A();//LD A, (DE); 8
+void opCode0x19(){	//ADD HL, DE; 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.HL.word & 0x0FFF)+(Registers.DE.word & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.HL.word + Registers.DE.word ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.HL.word += Registers.DE.word;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x1A(){	//LD A, (DE); 8
+	Registers.AF.hi = MEM->ReadByte(Registers.DE.word);
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void opCode0x1B();//DEC DE; 8
-void opCode0x1C();//INC E; 4
-void opCode0x1D();//DEC E; 4
+void opCode0x1C(){	//INC E; 4
+	Registers.DE.lo ++;
+	
+	Flag.N = 0;
+	
+	if(Registers.DE.lo == 0)
+		Flag.Z =1;
+	if(Registers.DE.lo > 0x0FFF)
+		Flag.H = 1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x1D(){	//DEC E; 4
+	Registers.DE.lo --;
+
+	Flag.N = 1;
+	
+	if(!Registers.DE.lo)
+		Flag.Z = 1;
+	if(Registers.DE.lo & 0xF)
+		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
 void opCode0x1E();//LD E, d8; 8
 void opCode0x1F();//RRA; 4
 
 void opCode0x20();//JR NZ, r8; 12/8
-void opCode0x21();//LD HL, d16; 12
+void opCode0x21(){	//LD HL, d16; 12
+	Registers.HL.word = MEM->Readword(Registers.PC.word + 1);
+
+	Clock.m = 3;
+	Clock.t = 12;
+	Registers.PC.word += 3;
+}
+
 void opCode0x22();//LD(HL+), A; 8
-void opCode0x23();//INC HL; 8
-void opCode0x24();//INC H; 4
-void opCode0x25();//DEC H; 4
+void opCode0x23(){	//INC HL; 8
+	Registers.HL.word ++;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x24(){	//INC H; 4
+	Registers.HL.hi ++;
+	
+	Flag.N = 0;
+	
+	if(Registers.HL.hi == 0)
+		Flag.Z =1;
+	if(Registers.HL.hi > 0x0FFF)
+		Flag.H = 1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x25(){	//DEC H; 4
+	Registers.HL.hi --;
+
+	Flag.N = 1;
+	
+	if(!Registers.HL.hi)
+		Flag.Z = 1;
+	if(Registers.HL.hi & 0xF)
+		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
 void opCode0x26();//LD H, d8; 8
 void opCode0x27();//DAA; 4
 void opCode0x28();//JR Z, r8; 12/8
-void opCode0x29();//ADD HL, HL; 8
+void opCode0x29(){	//ADD HL, HL; 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.HL.word & 0x0FFF) * 2)> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.HL.word * 2) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.HL.word *= 2;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void opCode0x2A();//LD A, (HL+); 8
 void opCode0x2B();//DEC HL; 8
-void opCode0x2C();//INC L; 4
-void opCode0x2D();//DEC L; 4
+void opCode0x2C(){	//INC L; 4
+	Registers.HL.lo ++;
+	
+	Flag.N = 0;
+	
+	if(Registers.HL.lo == 0)
+		Flag.Z =1;
+	if(Registers.HL.lo > 0x0FFF)
+		Flag.H = 1;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x2D(){	//DEC L; 4
+	Registers.HL.lo --;
+
+	Flag.N = 1;
+	
+	if(!Registers.HL.lo)
+		Flag.Z = 1;
+	if(Registers.HL.lo & 0xF)
+		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
 void opCode0x2E();//LD L, d8; 8
 void opCode0x2F();//CPL; 4
 
 void opCode0x30();//JR NC, r8; 12/8
-void opCode0x31();//LD SP, d16; 12
+void opCode0x31(){	//LD SP, d16; 12
+	Registers.SP.word = MEM->Readword(Registers.PC.word + 1);
+
+	Clock.m = 3;
+	Clock.t = 12;
+	Registers.PC.word += 3;
+}
+
 void opCode0x32();//LD (HL-), A; 8
-void opCode0x33();//INC SP; 8
-void opCode0x34();//INC (HL); 12
-void opCode0x35();//DEC (HL); 12
-void opCode0x36();//LD (HL), d8; 12
+void opCode0x33(){	//INC SP; 8
+	Registers.SP.word ++;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x34(){	//INC (HL); 12
+	uint8_t value = MEM->ReadByte(Registers.HL.word);
+	value ++;
+		
+	Flag.N = 0;
+	
+	if(value == 0)
+		Flag.Z =1;
+	if(value > 0x0FFF)
+		Flag.H = 1;
+	
+	Mem->WriteByte(Registers.HL.word, value);
+	
+	Clock.m = 1;
+	Clock.t = 12;
+	Registers.PC.word ++;
+}
+
+void opCode0x35(){	//DEC (HL); 12
+MEM->ReadByte(
+	uint8_t value = MEM->ReadByte(Registers.HL.word);
+	
+	value --;
+	
+	Mem->WriteByte(Registers.HL.word, value);
+
+	Flag.N = 1;
+	
+	if(!value)
+		Flag.Z = 1;
+	if(value & 0xF)
+		Flag.H = 0;
+
+	Clock.m = 1;
+	Clock.t = 12;
+	Registers.PC.word ++;
+}
+
+void opCode0x36(){	//LD (HL), d8; 12
+MEM->ReadByte(
+}
+
 void opCode0x37();//SCF; 4
 void opCode0x38();//JR C, r8; 12/8
-void opCode0x39();//ADD HL, SP; 8
+void opCode0x39(){	//ADD HL, SP; 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.HL.word & 0x0FFF)+(Registers.SP.word & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.HL.word + Registers.SP.word ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.HL.word += Registers.SP.word;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
 void opCode0x3A();//LD A, (HL-); 8
 void opCode0x3B();//DEC SP; 8
 void opCode0x3C();//INC A; 4
 
 void opCode0x3D(){	//DEC A; 4
-	Register.AF.hi --;
+	Registers.AF.hi --;
 	Clock.m = 1;
 	Clock.t = 4;
 	Registers.PC.word ++;
@@ -171,14 +532,14 @@ void opCode0x3D(){	//DEC A; 4
 	Flag.H = 0;
 	Flag.N = 1;
 
-	if(!Register.AF.hi)
+	if(!Registers.AF.hi)
 		Flag.F = 1;	//set zero flag
-	if(Register.AF.hi & 0xF)
+	if(Registers.AF.hi & 0xF)
 		Flag.H = 1;	//set half carry
 }
 
 void opCode0x3E(){	//LD A, d8; 8
-	Register.AF.hi = MEM->ReadByte(Registers.PC.word + 1);
+	Registers.AF.hi = MEM->ReadByte(Registers.PC.word + 1);
 	Clock.m =2;
 	Clock.t = 8;
 	Registers.PC.word += 2;
@@ -245,15 +606,77 @@ void opCode0x73();//LD (HL), E; 8
 void opCode0x74();//LD (HL), H; 8
 void opCode0x75();//LD (HL), L; 8
 void opCode0x76();//HALT; 4
-void opCode0x77();//LD (HL), A; 8
-void opCode0x78();//LD A, B; 4
-void opCode0x79();//LD A, C; 4
-void opCode0x7A();//LD A, D; 4
-void opCode0x7B();//LD A, E; 4
-void opCode0x7C();//LD A, H; 4
-void opCode0x7D();//LD A, L; 4
-void opCode0x7E();//LD A, (HL); 8
-void opCode0x7F();//LD A, A; 4
+void opCode0x77(){	//LD (HL), A; 8
+	MEM->Writeword(Registers.HL.word, Registers.AF.hi);
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x78(){	//LD A, B; 4
+	Registers.AF.hi = Registers.BC.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x79(){	//LD A, C; 4
+	Registers.AF.hi = Registers.BC.lo;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x7A(){	//LD A, D; 4
+	Registers.AF.hi = Registers.DE.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x7B(){	//LD A, E; 4
+	Registers.AF.hi = Registers.DE.lo;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x7C(){	//LD A, H; 4
+	Registers.AF.hi = Registers.HL.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x7D(){	//LD A, L; 4
+	Registers.AF.hi = Registers.HL.lo;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void opCode0x7E(){	//LD A, (HL); 8
+	Registers.AF.hi = Registers.HL.word;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void opCode0x7F(){	//LD A, A; 4
+	Registers.AF.hi = Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
 
 void opCode0x80();//ADD A, B; 4
 void opCode0x81();//ADD A, C; 4
@@ -365,7 +788,24 @@ void opCode0xE4();//BLANK
 void opCode0xE5();//PUSH HL; 16
 void opCode0xE6();//AND d8; 8
 void opCode0xE7();//RST 20H; 16
-void opCode0xE8();//ADD SP, r8; 16
+void opCode0xE8(){	//ADD SP, r8; 16
+	uint8_t value = Mem->ReadByte(Registers.PC.word+1);
+	
+	Flag.Z = 0;
+	Flag.N = 0;
+		
+	if(((Registers.SP.word & 0x0FFF)+(value & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.SP.word + value ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.SP.word += value;
+	
+	Clock.m = 2;
+	Clock.t = 16;
+	Registers.PC.word += 2;
+}
+
 void opCode0xE9();//JP (HL); 4
 void opCode0xEA();//LD (a16), A; 16
 void opCode0xEB();//BLANK
