@@ -16,8 +16,61 @@ const uint8_t BIOS[0x100] = {
 
 
 c_MEM::c_MEM(){
+	biosLoaded = 0;
 	memcpy(ioreset, BIOS, sizeof(ioreset));	//load bios into memory
+	//load rom
+	//run bios
+	biosLoaded = 1;
+	
 }
+
+uint8_t c_MEM::ReadByte(uint16_t addr){
+	if(addr <= 0x7FFF)
+		return cart[addr];
+	else if(addr >= 0x8000 && addr <= 0x9FFF)	//read from video ram
+		return vram[addr-0x8000];
+	
+	else if(addr >= 0xA000 && addr <= 0xBFFF)	//read from external ram
+		return eram[addr-0xA000];	
+	
+	else if(addr >= 0xC000 && addr <= 0xDFFFF)	//
+		return wram[addr-0xC000];
+	
+	else if(addr >= 0xE000 && addr <= 0xFDFF){
+		if(biosLoaded)
+			return 0;
+		return wram[addr-0xE000];
+	}
+	
+	else if(addr >= 0xFE00 && addr <= 0xFE9F)
+		return oam[addr-0xFE00];
+	
+	else if(addr >= 0xFF00 && addr <= 0xFF7F)
+		return zram[addr-0xFF00];
+	
+	else if(addr >= 0xFF80 && addr <= 0xFFFE)
+		return 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
