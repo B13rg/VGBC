@@ -3,6 +3,7 @@
 
 class c_MEM{
 	private:
+		uint8_t cartReset[0x100];	//basic bios;
 		uint8_t cart[0x8000];	//Program area in DMG and CGB 0x0000 - 0x7FFF
 		uint8_t vram[0x2000];	//8k of video ram 0x8000 - 0x9FFF
 		uint8_t eram[0x2000];	//8k of external ram 0xA000 - 0xBFFF
@@ -10,22 +11,18 @@ class c_MEM{
 				
 		uint8_t oam[0x9F];		//Hold display data for 40 objects 0xFE00 - 0xFE9F
         uint8_t zram[0x80];		//port/mode, control, sound registers 0xFF00 - 0xFF7F
-		uint8_t sram[0x7E];		//Working and stack ram 0xFF80 - 0xFFFE
+		uint8_t hram[0x7E];		//Working and stack ram 0xFF80 - 0xFFFE
 		
-        uint8_t joyflags;
+		uint8_t intFlag;		//Interupt flag register 0xFF0F
+		uint8_t intEnable;		//Interupt flags enable/disable
 		
-		uint8_t activeRomBank = 1;
-		
-		uint8_t ioreset[0x100];	//basic bios;
-		
+        //uint8_t activeRomBank = 1;
+				
 		int biosLoaded;
 		
 	public:
 		c_MEM();
 		~c_MEM();
-		
-		uint8_t intflags = 0x00;	//interupt flags register
-		uint8_t intenable = 0x00;
 		
 		uint8_t ReadByte(uint16_t addr);		//Read byte from addr
 		uint16_t ReadWord(uint16_t addr);	//Read word from addr

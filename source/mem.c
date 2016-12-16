@@ -1,5 +1,6 @@
 #include "DMGCPU.h"
-#include "mem.c"
+#include "MEM.h"
+
 /*
 uint8_t cart[0x8000];
 uint8_t sram[0x2000];
@@ -17,12 +18,14 @@ const uint8_t BIOS[0x100] = {
 
 c_MEM::c_MEM(){
 	biosLoaded = 0;
-	memcpy(ioreset, BIOS, sizeof(ioreset));	//load bios into memory
+	memcpy(cartReset, BIOS, sizeof(cartReset));	//load bios into memory
 	//load rom
 	//run bios
 	biosLoaded = 1;
 	
 }
+
+c_MEM::~c_MEM();
 
 uint8_t c_MEM::ReadByte(uint16_t addr){
 	if(addr <= 0x7FFF)
@@ -33,25 +36,68 @@ uint8_t c_MEM::ReadByte(uint16_t addr){
 	else if(addr >= 0xA000 && addr <= 0xBFFF)	//read from external ram
 		return eram[addr-0xA000];	
 	
-	else if(addr >= 0xC000 && addr <= 0xDFFFF)	//
+	else if(addr >= 0xC000 && addr <= 0xDFFF)	//read from work ram
 		return wram[addr-0xC000];
 	
-	else if(addr >= 0xE000 && addr <= 0xFDFF){
-		if(biosLoaded)
-			return 0;
+	else if(addr >= 0xE000 && addr <= 0xFDFF)	//mirror of work ram
 		return wram[addr-0xE000];
-	}
-	
-	else if(addr >= 0xFE00 && addr <= 0xFE9F)
+
+	else if(addr >= 0xFE00 && addr <= 0xFE9F)	//Sprite attribute table
 		return oam[addr-0xFE00];
 	
-	else if(addr >= 0xFF00 && addr <= 0xFF7F)
+	else if(addr >= 0xFF00 && addr <= 0xFF7F)	//I/O registers
 		return zram[addr-0xFF00];
 	
-	else if(addr >= 0xFF80 && addr <= 0xFFFE)
-		return 
+	else if(addr >= 0xFF80 && addr <= 0xFFFE)	//High Ram (stack)
+		return hram[addr-0xFF80];
+	
+	else if(addr == 0xFFFF)						//Interrupts enable register
+		return intFlag;
+	
+	return 0;
 }
 
+uint16_t = c_MEM::ReadWord(uint16_t addr){
+	return (ReadByte(addr) | (ReadByte(addr+1) << 8)); 
+}
+
+void c_MEM::WriteByte(uint16_t addr, uint8_t data){
+	if(addr >= 0x8000 && addr <= 0x9FFF)	//write to video ram
+		vram[addr-0x8000] = data;
+	
+	else if(addr >= 0xA000 && addr <= 0xBFFF)	//write to external ram
+		eram[addr-0xA000] = data;	
+	
+	else if(addr >= 0xC000 && addr <= 0xDFFF)	//write to work ram
+		wram[addr-0xC000] = data;
+	
+	else if(addr >= 0xE000 && addr <= 0xFDFF)	//mirror of work ram
+		wram[addr-0xE000] = data;
+
+	else if(addr >= 0xFE00 && addr <= 0xFE9F)	//Sprite attribute table
+		oam[addr-0xFE00] = data;
+	
+	else if(addr >= 0xFF80 && addr <= 0xFFFE)	//High Ram (stack)
+		hram[addr-0xFF80] = data;
+	
+	else if(addr == 0xFFFF)						//Interrupts enable register
+		intEnable = data;
+	
+	else if(addr == 0xFF0F)
+		intFlag = data;
+	
+	else if(addr >= 0xFF00 && addr <= 0xFF7F)	//I/O registers
+		zram[addr-0xFF00] = data;
+		
+	return 0;
+}
+
+void c_MEM::WriteWord(uint16_t addr, uint16_t data){
+	WriteByte(addr, (data & 0xFF));
+	WriteByte(addr+1, (data >> 8));
+}
+
+void c_MEM::loadRom(const char *fname);
 
 
 
