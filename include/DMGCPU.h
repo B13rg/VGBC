@@ -1,8 +1,8 @@
-#IFNDEF OPCODES_H
-#DEFINE OPCODES_H
+#IFNDEF DMGCPU_H
+#DEFINE DMGCPU_H
 
 class CPU{
-	//Template for egisters
+	//Template for registers
 	typedef union{
 		struct{
 			uint8_t lo;
@@ -17,7 +17,9 @@ class CPU{
 		Register16_t AF, BC, DE, HL;
 
 		//Special Registers
-		Register16_t SP, PC;
+		Register16_t SP, PC;	
+		//SP == Stack Pointer, points to current stack position
+		//PC == Program counter (address of the next instruction to be executed)
 	}regs_t;
 
 	typedef struct{
@@ -27,6 +29,7 @@ class CPU{
 	typedef struct{
 		int Z, N, H, C;
 	}flags_t;
+
 
 public:
 	CPU();
@@ -42,7 +45,8 @@ private:
 	void (CPU::*opCodesCB[0xFF])(void);
 
 	void opCodeInit();	//sets up OpCode connections
-
+	void setupCPU();
+	
 	regs_t Registers;
 	clock_t Clock;
 	clock_t ClockTotal;
@@ -322,5 +326,5 @@ private:
 	void opCode0xFD(){};//BLANK
 	void opCode0xFE();//CP d8; 8
 	void opCode0xFF();//RST 38H; 16
-
+}
 #endif
