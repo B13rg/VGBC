@@ -1,5 +1,5 @@
 #include "opcodes.h"
-#include "flags.h"
+
 
 //Template for registers
 typedef union{

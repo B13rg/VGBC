@@ -4,14 +4,16 @@ Counter = InterruptPeriod
 PC = InitialPC
 
 for(;;){
+	//Fetch instruction
 	Opcode = Memory[PC++];
 	Counter -= Cycles[OpCode];
-
+	
+	//decode and execute instruction
 	switch(Opcode){
 		case OpCode1: ;
 		//etc
 	}
-
+	
 	if(Counter <= 0){
 		// check for interrupts
 		// cyclic tasks
