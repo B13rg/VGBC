@@ -97,7 +97,74 @@ void c_MEM::WriteWord(uint16_t addr, uint16_t data){
 	WriteByte(addr+1, (data >> 8));
 }
 
-void c_MEM::loadRom(const char *fname);
+void c_MEM::loadRom(const char *fname){
+	FILE *f;
+	uint8_t *buffer;
+	uint8_t romType;
+	uint8_t checkSum;
+	unsigned long fileLen;
+	
+	f = fopen(fname, "rb");
+	fseek(f, 0, SEEK_END);
+	fileLen = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	
+	buffer = (uint8_t *)malloc(fileLen+1);
+	assert(buffer);
+	
+	fread(buffer, fileLen, 1, f);
+	fclose(file);
+	
+	romType = buffer[0x0147];
+	
+	switch(romType){
+		case 0x00:	//ROM only
+		case 0x01:	//MBC1
+		case 0x02:	//MBC1+RAM
+		case 0x03:	//MBC1+RAM+Battery
+		case 0x05:	//MBC2
+		case 0x06:	//MBC2+Battery
+		case 0x07:	//ROM+RAM
+		case 0x08:	//ROM+RAM+Battery
+		case 0x09:	//MMM01
+		case 0x0B:	//MMM01+RAM
+		case 0x0D:	//MMM01+RAM+Battery
+		case 0x0F:	//MBC3+TIMER+Battery
+		case 0x10:	//MBC3+TIMER+RAM+Battery
+		case 0x11:	//MBC3
+		case 0x12:	//MBC3+RAM
+		case 0x13:	//MBC3+RAM+Battery
+		case 0x15:	//MBC4
+		case 0x16:	//MBC4+RAM
+		case 0x17:	//MBC4+RAM+Battery
+		case 0x19:	//MBC5
+		case 0x1A:	//MBC5+RAM
+		case 0x1B:	//MBC5+RAM+Battery
+		case 0x1C:	//MBC5+RUMBLE
+		case 0x1D:	//MBC5+RUMBLE+RAM
+		case 0x1E:	//MBC5+RUMBLE+RAM+Battery
+		case 0xFC:	//Pocket Camera
+		case 0xFD:	//Bandai Tamas
+		case 0xFE:	//HuC3
+		case 0xFF:	//HuC1+RAM+Batter
+	}
+
+	romSize = buffer[0x0148];
+	
+	
+	//header checksum
+	checkSum = 0;
+	for(i=0x0134; i<0x014C; i++){
+		checkSum -= buffer[i]-1;
+	}
+	
+	if(checkSum != buffer[0x014D]){
+		//checksum incorrect, stop game
+		
+	}
+	
+	
+}
 
 
 
