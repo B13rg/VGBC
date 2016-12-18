@@ -23,11 +23,13 @@ c_MEM::c_MEM(){
 	//run bios
 	biosLoaded = 1;
 	
+	stackPointer = 0xFFFE;
 }
 
 c_MEM::~c_MEM();
 
 uint8_t c_MEM::ReadByte(uint16_t addr){
+	
 	if(addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
 		return rom[0][addr];
 	
@@ -40,11 +42,17 @@ uint8_t c_MEM::ReadByte(uint16_t addr){
 	else if(addr >= 0xA000 && addr <= 0xBFFF)	//read from external ram
 		return eram[addr-0xA000];	
 	
-	else if(addr >= 0xC000 && addr <= 0xDFFF)	//read from work ram
+	else if(addr >= 0xC000 && addr <= 0xCFFF)	//read from work ram
 		return wram[addr-0xC000];
+		
+	else if(addr >= 0xD000 && addr <= 0xDFFF)
+		return bram[activeRomBank][addr-0xD000];
 	
-	else if(addr >= 0xE000 && addr <= 0xFDFF)	//mirror of work ram
+	else if(addr >= 0xE000 && addr <= 0xEFFF)	//mirror of work ram
 		return wram[addr-0xE000];
+		
+	else if(addr >= 0xF000 && addr <= 0xFDFF)
+		return bram[activeRomBank][addr-0xF000];
 
 	else if(addr >= 0xFE00 && addr <= 0xFE9F)	//Sprite attribute table
 		return oam[addr-0xFE00];
@@ -61,12 +69,21 @@ uint8_t c_MEM::ReadByte(uint16_t addr){
 	return 0;
 }
 
-uint16_t = c_MEM::ReadWord(uint16_t addr){
+uint16_t c_MEM::ReadWord(uint16_t addr){
 	return (ReadByte(addr) | (ReadByte(addr+1) << 8)); 
 }
 
 void c_MEM::WriteByte(uint16_t addr, uint8_t data){
-	if(addr >= 0x8000 && addr <= 0x9FFF)	//write to video ram
+	if(addr < 0x8000)		//signals bank switch
+		handleBanking(addr, data);
+		
+	else if(addr == 0xFF04)	//if written to, sets it to 0
+		zram[0x0004] = 0;
+	
+	else if(addr >= 0xFEA0 && addr < 0xFEFF)	//read only stuff
+		return 0;
+	
+	else if(addr >= 0x8000 && addr <= 0x9FFF)	//write to video ram
 		vram[addr-0x8000] = data;
 	
 	else if(addr >= 0xA000 && addr <= 0xBFFF)	//write to external ram
@@ -101,6 +118,85 @@ void c_MEM::WriteWord(uint16_t addr, uint16_t data){
 	WriteByte(addr+1, (data >> 8));
 }
 
+void c_MEM::handleBanking(uint16_t addr, uint8_t data){
+	//Enabling ram
+	if(addr < 0x2000)
+		if(romBankType)
+			RAMBankEnable(addr, data);
+	
+	//Rom bank change
+	else if(addr >= 0x2000 && addr < 0x4000)
+		if(romBankType)
+			ChangeLoRomBank(data);
+	
+	//do ROM or RAM bank change
+	else if(addr >= 0x4000 && addr < 0x6000)
+		if(romBankType == 1)
+			ChangeHiRomBank(data);
+		else	
+			RamBankChange(data);
+	
+	else if(address >= 0x6000 && address < 0x8000)
+		if(romBankType == 1)
+			ChangeROMRAMMode(data);
+}
+
+void c_MEM::RAMBankEnable(uint16_t addr, uint8_t data){
+	uint8_t temp;
+	
+	if(romBankType == 2)
+		if(addr >> 4 & 1)	//find function
+			return 0;
+	
+	temp = data & 0xF;
+	
+	if(temp == 0xA)
+		ramEnable = 1;	
+	else if(temp == 0x0)
+		ramEnable = 0;	
+}
+
+void c_MEM::ChangeLoRomBank(uint8_t data){
+	uint8_t temp;
+	
+	if(romBankType == 2){
+		activeRomBank = data & 0xF;
+		if(activeRomBank == 0){
+			activeRomBank ++;
+			return;
+		}
+	}
+	
+	temp = data & 31;
+	activeRomBank &= 224;
+	activeRomBank |= temp;
+	
+	if(activeRomBank == 0)
+		activeRomBank ++;
+}
+
+void c_MEM::ChangeHiRomBank(uint8_t data){
+	activeRomBank &= 31;
+	
+	data &= 224;
+	activeRomBank |= data;
+	if(activeRomBank == 0)
+		activeRomBank ++;
+}
+
+void c_MEM::RamBankChange(uint8_t data){
+	activeRAmBank = data & 0x3;
+}
+
+void c_MEM::ChangeROMRAMMode(uint8_t data){
+	uint8_t temp;
+	
+	temp = data & 0x1;
+	
+	if(!data)
+		activeRAmBank = 0;
+}
+
 void c_MEM::loadRom(const char *fname){
 	FILE *f;
 	uint8_t *buffer, romType, ramSize, numBanks, i,k;
@@ -122,10 +218,28 @@ void c_MEM::loadRom(const char *fname){
 	fread(buffer, fileLen, 1, f);
 	fclose(file);
 	
-	romSize = buffer[0x0148];
+	switch(buffer[]){
+		case 1:
+			romBankType = 1;
+			break;
+		case 2:
+			romBankType = 1;
+			break;		
+		case 3:
+			romBankType = 1;
+			break;		
+		case 5:
+			romBankType = 2;
+			break;		
+		case 6:
+			romBankType = 2;
+			break;		
+	}
 	
-	switch(romSize){
+	
+	switch(buffer[0x0148]){		//Get ROM size		
 		case 0x00:		//2 banks
+			numBanks = 2;
 			break;
 		case 0x01:		//4 banks
 			numBanks = 4;
@@ -159,14 +273,51 @@ void c_MEM::loadRom(const char *fname){
 			break;		
 	}
 	
-	for(k = 0; k < numBanks; k++)
+	for(k = 0; k < numBanks; k++)	//copy rom data into banks
 		for(i = 0; i<4000; i++)
 			rom[k][i] = buffer[i+(k*0x4000)];
 
+	switch(buffer[0x0149]){	//get RAM size
+		case 0x00:		//none
+			break;
+		case 0x01:		//16kbit
+			ramBankSize = 1;
+			break;
+		case 0x02:		//64kbit
+			ramBankSize = 1;
+			break;		
+		case 0x03:		//256kbit
+			ramBankSize = 4;
+			break;		
+		case 0x04:		//1Mbit
+			ramBankSize = 16;
+			break;		
+		default: break;
+	}
+	
 	free(buffer);
 }
 
+void c_MEM::pushtoStack(uint16_t word){
+	uint8_t hi;
+	uint8_t lo;
+	
+	hi = addr >> 8;
+	lo = addr & 0xFF;
+	stackPointer.reg--;
+	WriteByte(stackPointer, hi);
+	stackPointer.reg--;
+	WriteByte(stackPointer, lo);
+}
 
+uint16_t c_MEM::popoffStack(){
+	uint16_t temp;
+	temp = ReadByte(stackPointer+1) << 8;
+	temp |= ReadByte(stackPointer);
+	stackPointer += 2;
+	
+	return temp;	
+}
 
 
 
