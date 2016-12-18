@@ -4,7 +4,6 @@
 
 CPU::CPU(){
 	opCodeInit();
-	setupCPU();
 	tick();
 }
 
@@ -12,24 +11,6 @@ CPU::CPU(){
 CPU::~CPU();
 
 void CPU::tick();
-
-void CPU::setupCPU(){
-	//Run DMG_ROM.bin, which is the gameboys bootstrap
-	FILE *fileptr;
-	char *buffer;
-	long filelen;
-	
-	fileptr = fopen("DMG_ROM.bin", "rb");
-	filelen = 256;
-	
-	buffer = (char *)malloc((filelen+1)*sizeof(char));
-	fread(buffer, filelen, 1, fileptr);
-	fclose(fileptr);
-	
-	Registers.PC.word = &buffer[0];	//Set start of address
-	
-	
-}
 
 CPU::uint32_t getClock(){
 	return Clock.m;
@@ -362,8 +343,8 @@ void CPU::opCodeInit(){	//sets up OpCode connections
 
 }
 
-void (CPU::*opCodes[0xFF])(void);
-void (CPU::*opCodesCB[0xFF])(void);
+void CPU::*opCodes[0xFF](void);
+void CPU::*opCodesCB[0xFF](void);
 /* Opcode Function Structure
 void CPU::opCode0x##(){; Function; Cycles
 	Do the opcode function

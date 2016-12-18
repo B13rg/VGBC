@@ -37,6 +37,8 @@ public:
 	void tick();
 	uint32_t getClock();
 	uint16_t getPC();
+	
+	void setPC(int);
 
 private:
 	//Regular OpCodes
@@ -45,7 +47,6 @@ private:
 	void (CPU::*opCodesCB[0xFF])(void);
 
 	void opCodeInit();	//sets up OpCode connections
-	void setupCPU();
 	
 	regs_t Registers;
 	clock_t Clock;
