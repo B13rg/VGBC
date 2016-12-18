@@ -4,7 +4,6 @@
 class c_MEM{
 	private:
 		uint8_t cartReset[0x100];	//basic bios;
-		uint8_t cart[0x8000];	//Program area in DMG and CGB 0x0000 - 0x7FFF
 		uint8_t rom[0xFF][0x4000]	//16k Memory banks
 		uint8_t vram[0x2000];	//8k of video ram 0x8000 - 0x9FFF
 		uint8_t eram[0x2000];	//8k of external ram 0xA000 - 0xBFFF
@@ -17,7 +16,7 @@ class c_MEM{
 		uint8_t intFlag;		//Interupt flag register 0xFF0F
 		uint8_t intEnable;		//Interupt flags enable/disable
 		
-        //uint8_t activeRomBank = 1;
+        uint8_t activeRomBank = 1;
 				
 		int biosLoaded;
 		

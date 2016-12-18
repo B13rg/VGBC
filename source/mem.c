@@ -28,8 +28,12 @@ c_MEM::c_MEM(){
 c_MEM::~c_MEM();
 
 uint8_t c_MEM::ReadByte(uint16_t addr){
-	if(addr <= 0x7FFF)
-		return cart[addr];
+	if(addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
+		return rom[0][addr];
+	
+	else if(addr >= 0x4000 && addr <= 0x7FFF)	//Area of switchable rom banks
+		return rom[activeRomBank-1][addr];
+		
 	else if(addr >= 0x8000 && addr <= 0x9FFF)	//read from video ram
 		return vram[addr-0x8000];
 	
@@ -99,12 +103,15 @@ void c_MEM::WriteWord(uint16_t addr, uint16_t data){
 
 void c_MEM::loadRom(const char *fname){
 	FILE *f;
-	uint8_t *buffer;
-	uint8_t romType;
-	uint8_t checkSum;
+	uint8_t *buffer, romType, ramSize, numBanks, i,k;
+	uint16_t rombank;
 	unsigned long fileLen;
 	
 	f = fopen(fname, "rb");
+	if(f==NULL){
+		//file error
+		return 1;
+	}
 	fseek(f, 0, SEEK_END);
 	fileLen = ftell(f);
 	fseek(f, 0, SEEK_SET);
@@ -115,55 +122,48 @@ void c_MEM::loadRom(const char *fname){
 	fread(buffer, fileLen, 1, f);
 	fclose(file);
 	
-	romType = buffer[0x0147];
-	
-	switch(romType){
-		case 0x00:	//ROM only
-		case 0x01:	//MBC1
-		case 0x02:	//MBC1+RAM
-		case 0x03:	//MBC1+RAM+Battery
-		case 0x05:	//MBC2
-		case 0x06:	//MBC2+Battery
-		case 0x07:	//ROM+RAM
-		case 0x08:	//ROM+RAM+Battery
-		case 0x09:	//MMM01
-		case 0x0B:	//MMM01+RAM
-		case 0x0D:	//MMM01+RAM+Battery
-		case 0x0F:	//MBC3+TIMER+Battery
-		case 0x10:	//MBC3+TIMER+RAM+Battery
-		case 0x11:	//MBC3
-		case 0x12:	//MBC3+RAM
-		case 0x13:	//MBC3+RAM+Battery
-		case 0x15:	//MBC4
-		case 0x16:	//MBC4+RAM
-		case 0x17:	//MBC4+RAM+Battery
-		case 0x19:	//MBC5
-		case 0x1A:	//MBC5+RAM
-		case 0x1B:	//MBC5+RAM+Battery
-		case 0x1C:	//MBC5+RUMBLE
-		case 0x1D:	//MBC5+RUMBLE+RAM
-		case 0x1E:	//MBC5+RUMBLE+RAM+Battery
-		case 0xFC:	//Pocket Camera
-		case 0xFD:	//Bandai Tamas
-		case 0xFE:	//HuC3
-		case 0xFF:	//HuC1+RAM+Batter
-	}
-
 	romSize = buffer[0x0148];
 	
-	
-	//header checksum
-	checkSum = 0;
-	for(i=0x0134; i<0x014C; i++){
-		checkSum -= buffer[i]-1;
+	switch(romSize){
+		case 0x00:		//2 banks
+			break;
+		case 0x01:		//4 banks
+			numBanks = 4;
+			break;
+		case 0x02:		//8 banks
+			numBanks = 8;
+			break;		
+		case 0x03:		//16 banks
+			numBanks = 16;
+			break;		
+		case 0x04:		//32 banks
+			numBanks = 32;
+			break;		
+		case 0x05:		//64 banks
+			numBanks = 64;
+			break;		
+		case 0x06:		//128 banks
+			numBanks = 128;
+			break;		
+		case 0x07:		//256 banks
+			numBanks = 256;
+			break;		
+		case 0x52:	//72 banks
+			numBanks = 72;
+			break;		
+		case 0x53:	//80 banks
+			numBanks = 80;
+			break;		
+		case 0x54:	//96 banks
+			numBanks = 96;
+			break;		
 	}
 	
-	if(checkSum != buffer[0x014D]){
-		//checksum incorrect, stop game
-		
-	}
-	
-	
+	for(k = 0; k < numBanks; k++)
+		for(i = 0; i<4000; i++)
+			rom[k][i] = buffer[i+(k*0x4000)];
+
+	free(buffer);
 }
 
 
