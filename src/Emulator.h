@@ -1,5 +1,7 @@
-#IFNDEF EMULATOR_H
-#DEFINE EMULATOR_H
+#ifndef EMULATOR_H
+#define EMULATOR_H
+
+using namespace std;
 
 class Emulator{
 	private:
@@ -17,11 +19,12 @@ class Emulator{
 		Emulator();
 		~Emulator();
 		
-		void update();
+		
 		void updateTimers(int);
 		void DoDividerRegister();
 		void setClockFreq();
 		void requestInterrupt(int);
 		void doInterrupts();
 		void serviceInterrupt(int);
-}
+};
+#endif

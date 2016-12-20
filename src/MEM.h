@@ -1,10 +1,13 @@
-#IFNDEF MEM_H
-#DEFINE MEM_H
+#ifndef MEM_H
+#define MEM_H
+
+using namespace std;
 
 class c_MEM{
+
 	private:
-		uint8_t cartReset[0x100];	//basic bios;
-		uint8_t rom[0xFF][0x4000]	//16k Memory banks
+		const uint8_t BIOS[0x100];	//basic bios;
+		uint8_t rom[0xFF][0x4000];	//16k Memory banks
 		uint8_t vram[0x2000];	//8k of video ram 0x8000 - 0x9FFF
 		uint8_t eram[0x2000];	//8k of external ram 0xA000 - 0xBFFF
 		uint8_t wram[0x1000];	//4k of working ram 0xC000 - 0xCFFF, copied to 0xE000 - 0xFDFF
@@ -52,3 +55,5 @@ class c_MEM{
 		uint16_t popoffStack();
 		
 };
+
+#endif

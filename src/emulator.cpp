@@ -1,7 +1,12 @@
+#include <stdio.h>
+#include <cstdint>
 #include "Emulator.h"
 #include "MEM.h"
 #include "GPU.h"
 #include "DMGCPU.h"
+
+using namespace std;
+
 Emulator::Emulator(){
 	cyclesThisUpdate = 0;
 	timerCounter = 1024;

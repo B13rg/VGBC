@@ -1,5 +1,7 @@
-#IFNDEF	GPU_H
-#DEFINE GPU_H
+#ifndef	GPU_H
+#define GPU_H
+
+using namespace std;
 
 class video{
 	private:
@@ -14,3 +16,4 @@ class video{
 	public:
 	
 };
+#endif

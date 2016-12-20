@@ -1,5 +1,7 @@
-#IFNDEF DMGCPU_H
-#DEFINE DMGCPU_H
+#ifndef DMGCPU_H
+#define DMGCPU_H
+
+using namespace std;
 
 class CPU{
 	//Template for registers
@@ -327,5 +329,5 @@ private:
 	void opCode0xFD(){};//BLANK
 	void opCode0xFE();//CP d8; 8
 	void opCode0xFF();//RST 38H; 16
-}
+};
 #endif

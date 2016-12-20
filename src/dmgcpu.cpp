@@ -1,5 +1,12 @@
-#include DMGCPU.h
 #include <stdio.h>
+#include <cstdint>
+#include DMGCPU.h
+#include "Emulator.h"
+#include "MEM.h"
+#include "GPU.h"
+
+
+using namespace std;
 
 
 CPU::CPU(){
