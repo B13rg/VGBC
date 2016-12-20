@@ -9,7 +9,8 @@
 using namespace std;
 
 
-CPU::CPU(){
+CPU::CPU(MEM* MEM){
+	mem = MEM;
 	opCodeInit();
 	tick();
 }

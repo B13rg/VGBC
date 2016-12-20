@@ -18,7 +18,7 @@ uint8_t wram[0x2000];
 uint8_t hram[0x80];
 */
 
-c_MEM::c_MEM(){
+MEM::MEM(){
 	//load rom
 	//run bios
 	biosLoaded = 1;
@@ -30,7 +30,7 @@ c_MEM::c_MEM(){
 
 
 
-uint8_t c_MEM::ReadByte(uint16_t addr){
+uint8_t MEM::ReadByte(uint16_t addr){
 	
 	if(addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
 		return rom[0][addr];
@@ -71,11 +71,11 @@ uint8_t c_MEM::ReadByte(uint16_t addr){
 	return 0;
 }
 
-uint16_t c_MEM::ReadWord(uint16_t addr){
+uint16_t MEM::ReadWord(uint16_t addr){
 	return (ReadByte(addr) | (ReadByte(addr+1) << 8)); 
 }
 
-void c_MEM::WriteByte(uint16_t addr, uint8_t data){
+void MEM::WriteByte(uint16_t addr, uint8_t data){
 	if(addr < 0x8000)		//signals bank switch
 		handleBanking(addr, data);
 		
@@ -115,12 +115,12 @@ void c_MEM::WriteByte(uint16_t addr, uint8_t data){
 	return;
 }
 
-void c_MEM::WriteWord(uint16_t addr, uint16_t data){
+void MEM::WriteWord(uint16_t addr, uint16_t data){
 	WriteByte(addr, (data & 0xFF));
 	WriteByte(addr+1, (data >> 8));
 }
 
-void c_MEM::handleBanking(uint16_t addr, uint8_t data){
+void MEM::handleBanking(uint16_t addr, uint8_t data){
 	//Enabling ram
 	if(addr < 0x2000)
 		if(romBankType)
@@ -143,12 +143,12 @@ void c_MEM::handleBanking(uint16_t addr, uint8_t data){
 			ChangeROMRAMMode(data);
 }
 
-void c_MEM::RAMBankEnable(uint16_t addr, uint8_t data){
+void MEM::RAMBankEnable(uint16_t addr, uint8_t data){
 	uint8_t temp;
 	
 	if(romBankType == 2)
 		if(addr >> 4 & 1)	//find function
-			return 0;
+			return;
 	
 	temp = data & 0xF;
 	
@@ -158,7 +158,7 @@ void c_MEM::RAMBankEnable(uint16_t addr, uint8_t data){
 		ramEnable = 0;	
 }
 
-void c_MEM::ChangeLoRomBank(uint8_t data){
+void MEM::ChangeLoRomBank(uint8_t data){
 	uint8_t temp;
 	
 	if(romBankType == 2){
@@ -177,7 +177,7 @@ void c_MEM::ChangeLoRomBank(uint8_t data){
 		activeRomBank ++;
 }
 
-void c_MEM::ChangeHiRomBank(uint8_t data){
+void MEM::ChangeHiRomBank(uint8_t data){
 	activeRomBank &= 31;
 	
 	data &= 224;
@@ -186,11 +186,11 @@ void c_MEM::ChangeHiRomBank(uint8_t data){
 		activeRomBank ++;
 }
 
-void c_MEM::RamBankChange(uint8_t data){
+void MEM::RamBankChange(uint8_t data){
 	activeRAmBank = data & 0x3;
 }
 
-void c_MEM::ChangeROMRAMMode(uint8_t data){
+void MEM::ChangeROMRAMMode(uint8_t data){
 	uint8_t temp;
 	
 	temp = data & 0x1;
@@ -199,7 +199,7 @@ void c_MEM::ChangeROMRAMMode(uint8_t data){
 		activeRAmBank = 0;
 }
 
-void c_MEM::loadRom(const char *fname){
+void MEM::loadRom(const char *fname){
 	FILE *f;
 	uint8_t *buffer, romType, ramSize, numBanks, i,k;
 	uint16_t rombank;
@@ -214,7 +214,7 @@ void c_MEM::loadRom(const char *fname){
 	fileLen = ftell(f);
 	fseek(f, 0, SEEK_SET);
 	
-	buffer = (uint8_t *)new(fileLen+1);
+	buffer = (uint8_t *) ::operator new (fileLen+1);
 	
 	
 	fread(buffer, fileLen, 1, f);
@@ -300,7 +300,7 @@ void c_MEM::loadRom(const char *fname){
 	delete(buffer);
 }
 
-void c_MEM::pushtoStack(uint16_t addr){
+void MEM::pushtoStack(uint16_t addr){
 	uint8_t hi;
 	uint8_t lo;
 	
@@ -312,7 +312,7 @@ void c_MEM::pushtoStack(uint16_t addr){
 	WriteByte(stackPointer, lo);
 }
 
-uint16_t c_MEM::popoffStack(){
+uint16_t MEM::popoffStack(){
 	uint16_t temp;
 	temp = ReadByte(stackPointer+1) << 8;
 	temp |= ReadByte(stackPointer);

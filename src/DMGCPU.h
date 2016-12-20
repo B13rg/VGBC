@@ -1,6 +1,8 @@
 #ifndef DMGCPU_H
 #define DMGCPU_H
 
+#include "MEM.h"
+
 using namespace std;
 
 class CPU{
@@ -34,7 +36,7 @@ class CPU{
 
 
 public:
-	CPU();
+	CPU(MEM*);
 	~CPU();
 	void tick();
 	uint32_t getClock();
@@ -55,6 +57,7 @@ private:
 	clock_t ClockTotal;
 	flags_t Flag;
 
+	MEM* mem;
 	void resetFlags();	//sets all flags to zero
 
 	//void opCode0x##(); Function; Cycles

@@ -3,7 +3,7 @@
 
 using namespace std;
 
-class c_MEM{
+class MEM{
 
 	private:
 		const uint8_t BIOS[0x100] = {
@@ -41,8 +41,8 @@ class c_MEM{
 		void ChangeROMRAMMode(uint8_t);
 		
 	public:
-		c_MEM();
-		~c_MEM();
+		MEM();
+		~MEM();
 		
 		uint8_t ReadByte(uint16_t addr);		//Read byte from addr
 		uint16_t ReadWord(uint16_t addr);	//Read word from addr

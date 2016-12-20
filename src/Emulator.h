@@ -1,6 +1,10 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#include "MEM.h"
+#include "GPU.h"
+#include "DMGCPU.h"
+
 using namespace std;
 
 class Emulator{
@@ -14,6 +18,10 @@ class Emulator{
 		int dividerRegister;
 		int dividerCounter;
 		int interruptMaster;
+		
+		MEM* mem;
+		GPU* gpu;
+		CPU* cpu;
 		
 	public:
 		Emulator();

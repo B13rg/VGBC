@@ -1,9 +1,11 @@
 #ifndef	GPU_H
 #define GPU_H
 
+#include "MEM.h"
+
 using namespace std;
 
-class video{
+class GPU{
 	private:
 		int dispEnable;		//bit 7: LCD Display enable 0=off, 1=on
 		int mapSelect;		//bit 6: Tile map select 0=9800-9BFF, 1=9C00-9FFF
@@ -14,6 +16,7 @@ class video{
 		int spriteEnable;	//bit 1: Bit 5 for sprites
 		int bgDisplay;		//bit 0: Bit 5 and 1 for background 0=off, 1=on
 	public:
+		GPU(MEM*);
 	
 };
 #endif
