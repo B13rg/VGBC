@@ -1,10 +1,23 @@
-CPP_FILES := $(wildcard source/*.cpp)
-OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
-LD_FLAGS := 
-CC_FLAGS :=
+CC = gcc
+FLAGS = -c
 
-VGBC: $(OBJ_FILES)
-   gcc $(LD_FLAGS) -o $@ $^
+SOURCE = ./src
+BUILDDIR = ./
 
-obj/%.o: src/%.cpp
-   gcc $(CC_FLAGS) -c -o $@ $<
+EXECUTABLE = VGBC
+SOURCES = $(wildcard $(SOURCE)/*.c)
+OBJECTS = $(patsubst $(SOURCE)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
+
+all: dir $(BUILDDIR)/$(EXECUTABLE)
+
+dir:
+	mkdir -p $(BUILDDIR)
+	
+$(BUILDDIR)/$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(FLAGS) $< -o $@
+	
+$(OBJECTS):$(BUILDDIR)/%.o : $(SOURCE)/%.c
+	$(CC) $(FLAGS) $< -o $@
+	
+clean:
+	rm -f $(BUILDDIR)/*o $(BUILDDIR)/$(EXECUTABLE)
