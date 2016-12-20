@@ -19,12 +19,13 @@ class Emulator{
 		Emulator();
 		~Emulator();
 		
+		void platform();
 		
 		void updateTimers(int);
 		void DoDividerRegister();
 		void setClockFreq();
 		void requestInterrupt(int);
-		void doInterrupts();
+		void doInterupts();
 		void serviceInterrupt(int);
 };
 #endif

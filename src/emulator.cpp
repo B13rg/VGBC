@@ -10,19 +10,22 @@ using namespace std;
 Emulator::Emulator(){
 	cyclesThisUpdate = 0;
 	timerCounter = 1024;
+	platform();
+}
+
+void Emulator::platform(){
 	c_MEM mem;
 	CPU cpu;
 }
-
 
 void Emulator::update(){
 	int cycles;
 	
 	while(cyclesThisUpdate < MAXCYCLES){
-		ExecuteNextOpcode();
+		//ExecuteNextOpcode();
 		cyclesThisUpdate += getClock();
 		updateTimers(cycles);
-		updateGraphics(cycles);
+		//updateGraphics(cycles);
 		doInterupts();
 	}
 	RenderScreen();
@@ -33,14 +36,14 @@ void Emulator::updateTimers(int cycles){
 	
 	DoDividerRegister();
 	
-	if(clock_enabled){
+	if(true){	//clock enabled
 		timerCounter -= cycles;
 		if(timerCounter <= 0){
 			setClockFreq();
-			temp = mem.ReadByte(0xFF05);
+			temp = c_MEM::ReadByte(0xFF05);
 			
 			if(temp == 255){
-				mem.WriteByte(0xFF05, 255);
+				c_MEM::WriteByte(0xFF05, 255);
 				requestInterrupt(2);
 			} else
 				WriteByte(0xFF05, temp+1)
@@ -79,7 +82,7 @@ void Emulator::setClockFreq(){
 	}
 }
 
-void requestInterrupt(int id){
+void Emulator::requestInterrupt(int id){
 	uint8_t = req;
 	
 	req = mem.ReadByte(0xFF0F);
@@ -87,7 +90,7 @@ void requestInterrupt(int id){
 	mem.WriteByte(0xFF0F, req);
 }
 
-void doInterupts(){
+void Emulator::doInterupts(){
 	uint8_t req, enabled;
 	
 	req = mem.ReadByte(0xFF0F);
@@ -100,17 +103,17 @@ void doInterupts(){
 					serviceInterrupt(i);
 }
 
-void serviceInterrupt(int interrupt){
+void Emulator::serviceInterrupt(int interrupt){
 	uint8_t req;
 		
 	interruptMaster = 0;
-	req = mem.ReadByte(0xFF0F);
+	req = c_MEM::ReadByte(0xFF0F);
 	
 	req |= 0 << interrupt;
 	
-	mem.WriteByte(0xFF0F, req);
+	c_MEM::WriteByte(0xFF0F, req);
 	
-	pushtoStack(cpu.getPC());
+	c_MEM::pushtoStack(cpu.getPC());
 	
 	switch(interrupt){
 		case 0:		//V-Blank
