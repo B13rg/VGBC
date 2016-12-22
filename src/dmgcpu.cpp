@@ -1210,14 +1210,126 @@ void CPU::opCode0x7F(){	//LD A, A; 4
 	Registers.PC.word ++;
 }
 
-void CPU::opCode0x80();//ADD A, B; 4
-void CPU::opCode0x81();//ADD A, C; 4
-void CPU::opCode0x82();//ADD A, D; 4
-void CPU::opCode0x83();//ADD A, E; 4
-void CPU::opCode0x84();//ADD A, H; 4
-void CPU::opCode0x85();//ADD A, L; 4
+void CPU::opCode0x80(){	//ADD A, B; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.BC.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo + Registers.BC.hi ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.BC.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x81(){	//ADD A, C; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.BC.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo + Registers.BC.lo ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.BC.lo;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x82(){	//ADD A, D; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.DE.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo + Registers.DE.hi ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.DE.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x83(){	//ADD A, E; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.DE.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo + Registers.DE.lo ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.DE.lo;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x84(){	//ADD A, H; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.HL.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo + Registers.HL.hi ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.HL.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x85(){	//ADD A, L; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.HL.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo + Registers.HL.lo ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.HL.lo;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
 void CPU::opCode0x86();//ADD A, (HL); 8
-void CPU::opCode0x87();//ADD A, A; 4
+void CPU::opCode0x87(){	//ADD A, A; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF) * 2)> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.lo * 2) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi *= 2;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
 void CPU::opCode0x88();//ADC A, B; 4
 void CPU::opCode0x89();//ADC A, C; 4
 void CPU::opCode0x8A();//ADC A, D; 4
