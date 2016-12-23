@@ -1,7 +1,7 @@
 # VGBC
 Virtual Gameboy Color
 
-My purpose with this project is firstly to create a working gameboy color emulator, but to also create a program that allows to look deeper into the inner workings of a game.  I want a user to be able to see and manipulate memory and register values while the game is running, and go step by step through each instruction run.  It's someting I've alwyas wanted from an emulator, but rarely find. 
+My purpose with this project is firstly to create a working gameboy color emulator, but to also create a program that allows to look deeper into the inner workings of a game.  I want a user to be able to see and manipulate memory and register values while the game is running, and go step by step through each instruction run.  It's someting I've alwyas wanted from an emulator, but rarely find.  There is one program, no$gmb that does this, but I find the interface clunky, plus the program itself hasn't been updated in 15 years.  You can find it [here](http://problemkaputt.de/gmb.htm).  
 
 
 
