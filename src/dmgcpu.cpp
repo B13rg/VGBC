@@ -5,16 +5,13 @@
 #include "MEM.h"
 #include "GPU.h"
 
-
 using namespace std;
-
 
 CPU::CPU(MEM* MEM){
 	mem = MEM;
 	opCodeInit();
 	tick();
 }
-
 
 CPU::~CPU();
 
@@ -25,12 +22,6 @@ CPU::uint32_t getClock(){
 }
 
 CPU::uint16_t getPC();
-
-
-
-
-
-
 
 /*
 Counter = InterruptPeriod
@@ -144,7 +135,7 @@ void CPU::opCodeInit(){	//sets up OpCode connections
     opCodes[0x4F] = &CPU::opCode0x4F;
     opCodes[0x50] = &CPU::opCode0x50;
     opCodes[0x51] = &CPU::opCode0x51;
-    opCodes[0x52] = &CPU::opCode0x52
+    opCodes[0x52] = &CPU::opCode0x52;
     opCodes[0x53] = &CPU::opCode0x53;
     opCodes[0x54] = &CPU::opCode0x54;
     opCodes[0x55] = &CPU::opCode0x55;
@@ -321,34 +312,266 @@ void CPU::opCodeInit(){	//sets up OpCode connections
     opCodes[0xFE] = &CPU::opCode0xFE;
     opCodes[0xFF] = &CPU::opCode0xFF;
 
-    //CB opcode table need to implement fully
-    uint8_t i;
-    for(i = 0; i < 0xFF; i++){
-        opCodesCB[i] = NULL;
-    }
-    opCodesCB[0x11] = &CPU::OPCodeCB0x11;
-    opCodesCB[0x17] = &CPU::OPCodeCB0x17;
-    opCodesCB[0x23] = &CPU::OPCodeCB0x23;
-    opCodesCB[0x27] = &CPU::OPCodeCB0x27;
-    opCodesCB[0x33] = &CPU::OPCodeCB0x33;
-    opCodesCB[0x37] = &CPU::OPCodeCB0x37;
-    opCodesCB[0x38] = &CPU::OPCodeCB0x38;
-    opCodesCB[0x3F] = &CPU::OPCodeCB0x3F;
-    opCodesCB[0x40] = &CPU::OPCodeCB0x40;
-    opCodesCB[0x41] = &CPU::OPCodeCB0x41;
-    opCodesCB[0x47] = &CPU::OPCodeCB0x47;
-    opCodesCB[0x50] = &CPU::OPCodeCB0x50;
-    opCodesCB[0x5F] = &CPU::OPCodeCB0x5F;
-    opCodesCB[0x67] = &CPU::OPCodeCB0x67;
-    opCodesCB[0x6F] = &CPU::OPCodeCB0x6F;
-    opCodesCB[0x77] = &CPU::OPCodeCB0x77;
-    opCodesCB[0x7C] = &CPU::OPCodeCB0x7C;
-    opCodesCB[0x7E] = &CPU::OPCodeCB0x7E;
-    opCodesCB[0x7F] = &CPU::OPCodeCB0x7F;
-    opCodesCB[0x86] = &CPU::OPCodeCB0x86;
-    opCodesCB[0x87] = &CPU::OPCodeCB0x87;
-    opCodesCB[0xFE] = &CPU::OPCodeCB0xFE;
-
+    //   
+	//Start of CB table
+	//
+	
+	opCodesCB[0x00] = &CPU::opCodeCB0x00;
+    opCodesCB[0x01] = &CPU::opCodeCB0x01;
+    opCodesCB[0x02] = &CPU::opCodeCB0x02;
+    opCodesCB[0x03] = &CPU::opCodeCB0x03;
+    opCodesCB[0x04] = &CPU::opCodeCB0x04;
+    opCodesCB[0x05] = &CPU::opCodeCB0x05;
+    opCodesCB[0x06] = &CPU::opCodeCB0x06;
+    opCodesCB[0x07] = &CPU::opCodeCB0x07;
+    opCodesCB[0x08] = &CPU::opCodeCB0x08;
+    opCodesCB[0x09] = &CPU::opCodeCB0x09;
+    opCodesCB[0x0A] = &CPU::opCodeCB0x0A;
+    opCodesCB[0x0B] = &CPU::opCodeCB0x0B;
+    opCodesCB[0x0C] = &CPU::opCodeCB0x0C;
+    opCodesCB[0x0D] = &CPU::opCodeCB0x0D;
+    opCodesCB[0x0E] = &CPU::opCodeCB0x0E;
+    opCodesCB[0x0F] = &CPU::opCodeCB0x0F;
+    opCodesCB[0x10] = &CPU::opCodeCB0x10;
+    opCodesCB[0x11] = &CPU::opCodeCB0x11;
+    opCodesCB[0x12] = &CPU::opCodeCB0x12;
+    opCodesCB[0x13] = &CPU::opCodeCB0x13;
+    opCodesCB[0x14] = &CPU::opCodeCB0x14;
+    opCodesCB[0x15] = &CPU::opCodeCB0x15;
+    opCodesCB[0x16] = &CPU::opCodeCB0x16;
+    opCodesCB[0x17] = &CPU::opCodeCB0x17;
+    opCodesCB[0x18] = &CPU::opCodeCB0x18;
+    opCodesCB[0x19] = &CPU::opCodeCB0x19;
+    opCodesCB[0x1A] = &CPU::opCodeCB0x1A;
+    opCodesCB[0x1B] = &CPU::opCodeCB0x1B;
+    opCodesCB[0x1C] = &CPU::opCodeCB0x1C;
+    opCodesCB[0x1D] = &CPU::opCodeCB0x1D;
+    opCodesCB[0x1E] = &CPU::opCodeCB0x1E;
+    opCodesCB[0x1F] = &CPU::opCodeCB0x1F;
+    opCodesCB[0x20] = &CPU::opCodeCB0x20;
+    opCodesCB[0x21] = &CPU::opCodeCB0x21;
+    opCodesCB[0x22] = &CPU::opCodeCB0x22;
+    opCodesCB[0x23] = &CPU::opCodeCB0x23;
+    opCodesCB[0x24] = &CPU::opCodeCB0x24;
+    opCodesCB[0x25] = &CPU::opCodeCB0x25;
+    opCodesCB[0x26] = &CPU::opCodeCB0x26;
+    opCodesCB[0x27] = &CPU::opCodeCB0x27;
+    opCodesCB[0x28] = &CPU::opCodeCB0x28;
+    opCodesCB[0x29] = &CPU::opCodeCB0x29;
+    opCodesCB[0x2A] = &CPU::opCodeCB0x2A;
+    opCodesCB[0x2B] = &CPU::opCodeCB0x2B;
+    opCodesCB[0x2C] = &CPU::opCodeCB0x2C;
+    opCodesCB[0x2D] = &CPU::opCodeCB0x2D;
+    opCodesCB[0x2E] = &CPU::opCodeCB0x2E;
+    opCodesCB[0x2F] = &CPU::opCodeCB0x2F;
+    opCodesCB[0x30] = &CPU::opCodeCB0x30;
+    opCodesCB[0x31] = &CPU::opCodeCB0x31;
+    opCodesCB[0x32] = &CPU::opCodeCB0x32;
+    opCodesCB[0x33] = &CPU::opCodeCB0x33;
+    opCodesCB[0x34] = &CPU::opCodeCB0x34;
+    opCodesCB[0x35] = &CPU::opCodeCB0x35;
+    opCodesCB[0x36] = &CPU::opCodeCB0x36;
+    opCodesCB[0x37] = &CPU::opCodeCB0x37;
+    opCodesCB[0x38] = &CPU::opCodeCB0x38;
+    opCodesCB[0x39] = &CPU::opCodeCB0x39;
+    opCodesCB[0x3A] = &CPU::opCodeCB0x3A;
+    opCodesCB[0x3B] = &CPU::opCodeCB0x3B;
+    opCodesCB[0x3C] = &CPU::opCodeCB0x3C;
+    opCodesCB[0x3D] = &CPU::opCodeCB0x3D;
+    opCodesCB[0x3E] = &CPU::opCodeCB0x3E;
+    opCodesCB[0x3F] = &CPU::opCodeCB0x3F;
+    opCodesCB[0x40] = &CPU::opCodeCB0x40;
+    opCodesCB[0x41] = &CPU::opCodeCB0x41;
+    opCodesCB[0x42] = &CPU::opCodeCB0x42;
+    opCodesCB[0x43] = &CPU::opCodeCB0x43;
+    opCodesCB[0x44] = &CPU::opCodeCB0x44;
+    opCodesCB[0x45] = &CPU::opCodeCB0x45;
+    opCodesCB[0x46] = &CPU::opCodeCB0x46;
+    opCodesCB[0x47] = &CPU::opCodeCB0x47;
+    opCodesCB[0x48] = &CPU::opCodeCB0x48;
+    opCodesCB[0x49] = &CPU::opCodeCB0x49;
+    opCodesCB[0x4A] = &CPU::opCodeCB0x4A;
+    opCodesCB[0x4B] = &CPU::opCodeCB0x4B;
+    opCodesCB[0x4C] = &CPU::opCodeCB0x4C;
+    opCodesCB[0x4D] = &CPU::opCodeCB0x4D;
+    opCodesCB[0x4E] = &CPU::opCodeCB0x4E;
+    opCodesCB[0x4F] = &CPU::opCodeCB0x4F;
+    opCodesCB[0x50] = &CPU::opCodeCB0x50;
+    opCodesCB[0x51] = &CPU::opCodeCB0x51;
+    opCodesCB[0x52] = &CPU::opCodeCB0x52;
+    opCodesCB[0x53] = &CPU::opCodeCB0x53;
+    opCodesCB[0x54] = &CPU::opCodeCB0x54;
+    opCodesCB[0x55] = &CPU::opCodeCB0x55;
+    opCodesCB[0x56] = &CPU::opCodeCB0x56;
+    opCodesCB[0x57] = &CPU::opCodeCB0x57;
+    opCodesCB[0x58] = &CPU::opCodeCB0x58;
+    opCodesCB[0x59] = &CPU::opCodeCB0x59;
+    opCodesCB[0x5A] = &CPU::opCodeCB0x5A;
+    opCodesCB[0x5B] = &CPU::opCodeCB0x5B;
+    opCodesCB[0x5C] = &CPU::opCodeCB0x5C;
+    opCodesCB[0x5D] = &CPU::opCodeCB0x5D;
+    opCodesCB[0x5E] = &CPU::opCodeCB0x5E;
+    opCodesCB[0x5F] = &CPU::opCodeCB0x5F;
+    opCodesCB[0x60] = &CPU::opCodeCB0x60;
+    opCodesCB[0x61] = &CPU::opCodeCB0x61;
+    opCodesCB[0x62] = &CPU::opCodeCB0x62;
+    opCodesCB[0x63] = &CPU::opCodeCB0x63;
+    opCodesCB[0x64] = &CPU::opCodeCB0x64;
+    opCodesCB[0x65] = &CPU::opCodeCB0x65;
+    opCodesCB[0x66] = &CPU::opCodeCB0x66;
+    opCodesCB[0x67] = &CPU::opCodeCB0x67;
+    opCodesCB[0x68] = &CPU::opCodeCB0x68;
+    opCodesCB[0x69] = &CPU::opCodeCB0x69;
+    opCodesCB[0x6A] = &CPU::opCodeCB0x6A;
+    opCodesCB[0x6B] = &CPU::opCodeCB0x6B;
+    opCodesCB[0x6C] = &CPU::opCodeCB0x6C;
+    opCodesCB[0x6D] = &CPU::opCodeCB0x6D;
+    opCodesCB[0x6E] = &CPU::opCodeCB0x6E;
+    opCodesCB[0x6F] = &CPU::opCodeCB0x6F;
+    opCodesCB[0x70] = &CPU::opCodeCB0x70;
+    opCodesCB[0x71] = &CPU::opCodeCB0x71;
+    opCodesCB[0x72] = &CPU::opCodeCB0x72;
+    opCodesCB[0x73] = &CPU::opCodeCB0x73;
+    opCodesCB[0x74] = &CPU::opCodeCB0x74;
+    opCodesCB[0x75] = &CPU::opCodeCB0x75;
+    opCodesCB[0x76] = &CPU::opCodeCB0x76;
+    opCodesCB[0x77] = &CPU::opCodeCB0x77;
+    opCodesCB[0x78] = &CPU::opCodeCB0x78;
+    opCodesCB[0x79] = &CPU::opCodeCB0x79;
+    opCodesCB[0x7A] = &CPU::opCodeCB0x7A;
+    opCodesCB[0x7B] = &CPU::opCodeCB0x7B;
+    opCodesCB[0x7C] = &CPU::opCodeCB0x7C;
+    opCodesCB[0x7D] = &CPU::opCodeCB0x7D;
+    opCodesCB[0x7E] = &CPU::opCodeCB0x7E;
+    opCodesCB[0x7F] = &CPU::opCodeCB0x7F;
+    opCodesCB[0x80] = &CPU::opCodeCB0x80;
+    opCodesCB[0x81] = &CPU::opCodeCB0x81;
+    opCodesCB[0x82] = &CPU::opCodeCB0x82;
+    opCodesCB[0x83] = &CPU::opCodeCB0x83;
+    opCodesCB[0x84] = &CPU::opCodeCB0x84;
+    opCodesCB[0x85] = &CPU::opCodeCB0x85;
+    opCodesCB[0x86] = &CPU::opCodeCB0x86;
+    opCodesCB[0x87] = &CPU::opCodeCB0x87;
+    opCodesCB[0x88] = &CPU::opCodeCB0x88;
+    opCodesCB[0x89] = &CPU::opCodeCB0x89;
+    opCodesCB[0x8A] = &CPU::opCodeCB0x8A;
+    opCodesCB[0x8B] = &CPU::opCodeCB0x8B;
+    opCodesCB[0x8C] = &CPU::opCodeCB0x8C;
+    opCodesCB[0x8D] = &CPU::opCodeCB0x8D;
+    opCodesCB[0x8E] = &CPU::opCodeCB0x8E;
+    opCodesCB[0x8F] = &CPU::opCodeCB0x8F;
+    opCodesCB[0x90] = &CPU::opCodeCB0x90;
+    opCodesCB[0x91] = &CPU::opCodeCB0x91;
+    opCodesCB[0x92] = &CPU::opCodeCB0x92;
+    opCodesCB[0x93] = &CPU::opCodeCB0x93;
+    opCodesCB[0x94] = &CPU::opCodeCB0x94;
+    opCodesCB[0x95] = &CPU::opCodeCB0x95;
+    opCodesCB[0x96] = &CPU::opCodeCB0x96;
+    opCodesCB[0x97] = &CPU::opCodeCB0x97;
+    opCodesCB[0x98] = &CPU::opCodeCB0x98;
+    opCodesCB[0x99] = &CPU::opCodeCB0x99;
+    opCodesCB[0x9A] = &CPU::opCodeCB0x9A;
+    opCodesCB[0x9B] = &CPU::opCodeCB0x9B;
+    opCodesCB[0x9C] = &CPU::opCodeCB0x9C;
+    opCodesCB[0x9D] = &CPU::opCodeCB0x9D;
+    opCodesCB[0x9E] = &CPU::opCodeCB0x9E;
+    opCodesCB[0x9F] = &CPU::opCodeCB0x9F;
+    opCodesCB[0xA0] = &CPU::opCodeCB0xA0;
+    opCodesCB[0xA1] = &CPU::opCodeCB0xA1;
+    opCodesCB[0xA2] = &CPU::opCodeCB0xA2;
+    opCodesCB[0xA3] = &CPU::opCodeCB0xA3;
+    opCodesCB[0xA4] = &CPU::opCodeCB0xA4;
+    opCodesCB[0xA5] = &CPU::opCodeCB0xA5;
+    opCodesCB[0xA6] = &CPU::opCodeCB0xA6;
+    opCodesCB[0xA7] = &CPU::opCodeCB0xA7;
+    opCodesCB[0xA8] = &CPU::opCodeCB0xA8;
+    opCodesCB[0xA9] = &CPU::opCodeCB0xA9;
+    opCodesCB[0xAA] = &CPU::opCodeCB0xAA;
+    opCodesCB[0xAB] = &CPU::opCodeCB0xAB;
+    opCodesCB[0xAC] = &CPU::opCodeCB0xAC;
+    opCodesCB[0xAD] = &CPU::opCodeCB0xAD;
+    opCodesCB[0xAE] = &CPU::opCodeCB0xAE;
+    opCodesCB[0xAF] = &CPU::opCodeCB0xAF;
+    opCodesCB[0xB0] = &CPU::opCodeCB0xB0;
+    opCodesCB[0xB1] = &CPU::opCodeCB0xB1;
+    opCodesCB[0xB2] = &CPU::opCodeCB0xB2;
+    opCodesCB[0xB3] = &CPU::opCodeCB0xB3;
+    opCodesCB[0xB4] = &CPU::opCodeCB0xB4;
+    opCodesCB[0xB5] = &CPU::opCodeCB0xB5;
+    opCodesCB[0xB6] = &CPU::opCodeCB0xB6;
+    opCodesCB[0xB7] = &CPU::opCodeCB0xB7;
+    opCodesCB[0xB8] = &CPU::opCodeCB0xB8;
+    opCodesCB[0xB9] = &CPU::opCodeCB0xB9;
+    opCodesCB[0xBA] = &CPU::opCodeCB0xBA;
+    opCodesCB[0xBB] = &CPU::opCodeCB0xBB;
+    opCodesCB[0xBC] = &CPU::opCodeCB0xBC;
+    opCodesCB[0xBD] = &CPU::opCodeCB0xBD;
+    opCodesCB[0xBE] = &CPU::opCodeCB0xBE;
+    opCodesCB[0xBF] = &CPU::opCodeCB0xBF;
+    opCodesCB[0xC0] = &CPU::opCodeCB0xC0;
+    opCodesCB[0xC1] = &CPU::opCodeCB0xC1;
+    opCodesCB[0xC2] = &CPU::opCodeCB0xC2;
+    opCodesCB[0xC3] = &CPU::opCodeCB0xC3;
+    opCodesCB[0xC4] = &CPU::opCodeCB0xC4;
+    opCodesCB[0xC5] = &CPU::opCodeCB0xC5;
+    opCodesCB[0xC6] = &CPU::opCodeCB0xC6;
+    opCodesCB[0xC7] = &CPU::opCodeCB0xC7;
+    opCodesCB[0xC8] = &CPU::opCodeCB0xC8;
+    opCodesCB[0xC9] = &CPU::opCodeCB0xC9;
+    opCodesCB[0xCA] = &CPU::opCodeCB0xCA;
+	opCodesCB[0xCB] = &CPU::opCodeCB0xCB
+    opCodesCB[0xCC] = &CPU::opCodeCB0xCC;
+    opCodesCB[0xCD] = &CPU::opCodeCB0xCD;
+    opCodesCB[0xCE] = &CPU::opCodeCB0xCE;
+    opCodesCB[0xCF] = &CPU::opCodeCB0xCF;
+    opCodesCB[0xD0] = &CPU::opCodeCB0xD0;
+    opCodesCB[0xD1] = &CPU::opCodeCB0xD1;
+    opCodesCB[0xD2] = &CPU::opCodeCB0xD2;
+    opCodesCB[0xD3] = &CPU::opcodeCB0xD3;
+    opCodesCB[0xD4] = &CPU::opCodeCB0xD4;
+    opCodesCB[0xD5] = &CPU::opCodeCB0xD5;
+    opCodesCB[0xD6] = &CPU::opCodeCB0xD6;
+    opCodesCB[0xD7] = &CPU::opCodeCB0xD7;
+    opCodesCB[0xD8] = &CPU::opCodeCB0xD8;
+    opCodesCB[0xD9] = &CPU::opCodeCB0xD9;
+    opCodesCB[0xDA] = &CPU::opCodeCB0xDA;
+    opCodesCB[0xDB] = &CPU::opcodeCB0xDB;
+    opCodesCB[0xDC] = &CPU::opCodeCB0xDC;
+    opCodesCB[0xDD] = &CPU::opcodeCB0xDD;
+    opCodesCB[0xDE] = &CPU::opCodeCB0xDE;
+    opCodesCB[0xDF] = &CPU::opCodeCB0xDF;
+    opCodesCB[0xE0] = &CPU::opCodeCB0xE0;
+    opCodesCB[0xE1] = &CPU::opCodeCB0xE1;
+    opCodesCB[0xE2] = &CPU::opCodeCB0xE2;
+    opCodesCB[0xE3] = &CPU::opcodeCB0xE3;
+    opCodesCB[0xE4] = &CPU::opcodeCB0xE4;
+    opCodesCB[0xE5] = &CPU::opCodeCB0xE5;
+    opCodesCB[0xE6] = &CPU::opCodeCB0xE6;
+    opCodesCB[0xE7] = &CPU::opCodeCB0xE7;
+    opCodesCB[0xE8] = &CPU::opCodeCB0xE8;
+    opCodesCB[0xE9] = &CPU::opCodeCB0xE9;
+    opCodesCB[0xEA] = &CPU::opCodeCB0xEA;
+    opCodesCB[0xEB] = &CPU::opcodeCB0xEB;
+    opCodesCB[0xEC] = &CPU::opcodeCB0xEC;
+    opCodesCB[0xED] = &CPU::opcodeCB0xED;
+    opCodesCB[0xEE] = &CPU::opCodeCB0xEE;
+    opCodesCB[0xEF] = &CPU::opCodeCB0xEF;
+    opCodesCB[0xF0] = &CPU::opCodeCB0xF0;
+    opCodesCB[0xF1] = &CPU::opCodeCB0xF1;
+    opCodesCB[0xF2] = &CPU::opCodeCB0xF2;
+    opCodesCB[0xF3] = &CPU::opCodeCB0xF3;
+    opCodesCB[0xF4] = &CPU::opcodeCB0xF4;
+    opCodesCB[0xF5] = &CPU::opCodeCB0xF5;
+    opCodesCB[0xF6] = &CPU::opCodeCB0xF6;
+    opCodesCB[0xF7] = &CPU::opCodeCB0xF7;
+    opCodesCB[0xF8] = &CPU::opCodeCB0xF8;
+    opCodesCB[0xF9] = &CPU::opCodeCB0xF9;
+    opCodesCB[0xFA] = &CPU::opCodeCB0xFA;
+    opCodesCB[0xFB] = &CPU::opCodeCB0xFB;
+    opCodesCB[0xFC] = &CPU::opcodeCB0xFC;
+    opCodesCB[0xFD] = &CPU::opcodeCB0xFD;
+    opCodesCB[0xFE] = &CPU::opCodeCB0xFE;
+    opCodesCB[0xFF] = &CPU::opCodeCB0xFF;
 }
 
 void CPU::*opCodes[0xFF](void);
@@ -614,6 +837,7 @@ void CPU::opCode0x16(){	//LD D, D8; 8
 }
 
 void CPU::opCode0x17();//RLA; 4
+
 void CPU::opCode0x18(){	//JR r8; 12
 	Registers.PC.word += (uint8_t)(MEM->ReadByte(Registers.PC.word + 1)) + 2;
 	Clock.m = 2;
@@ -1195,7 +1419,7 @@ void CPU::opCode0x7D(){	//LD A, L; 4
 }
 
 void CPU::opCode0x7E(){	//LD A, (HL); 8
-	Registers.AF.hi = Registers.HL.word;
+	Registers.AF.hi = mem->ReadByte(Registers.HL.word);
 
 	Clock.m = 1;
 	Clock.t = 8;
@@ -1217,10 +1441,12 @@ void CPU::opCode0x80(){	//ADD A, B; 4
 	
 	if(((Registers.AF.hi & 0x0FFF)+(Registers.BC.hi & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo + Registers.BC.hi ) > 0x0FFF)
+	if((Registers.AF.hi + Registers.BC.hi ) > 0x0FFF)
 		Flag.C = 1;
-	
+		
 	Registers.AF.hi += Registers.BC.hi;
+	
+	Flag.Z = !Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
@@ -1234,10 +1460,12 @@ void CPU::opCode0x81(){	//ADD A, C; 4
 	
 	if(((Registers.AF.hi & 0x0FFF)+(Registers.BC.lo & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo + Registers.BC.lo ) > 0x0FFF)
+	if((Registers.AF.hi + Registers.BC.lo ) > 0x0FFF)
 		Flag.C = 1;
 	
 	Registers.AF.hi += Registers.BC.lo;
+			
+	Flag.Z = !Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
@@ -1251,10 +1479,12 @@ void CPU::opCode0x82(){	//ADD A, D; 4
 	
 	if(((Registers.AF.hi & 0x0FFF)+(Registers.DE.hi & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo + Registers.DE.hi ) > 0x0FFF)
+	if((Registers.AF.hi + Registers.DE.hi ) > 0x0FFF)
 		Flag.C = 1;
 	
 	Registers.AF.hi += Registers.DE.hi;
+	
+	Flag.Z != Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
@@ -1268,10 +1498,12 @@ void CPU::opCode0x83(){	//ADD A, E; 4
 	
 	if(((Registers.AF.hi & 0x0FFF)+(Registers.DE.lo & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo + Registers.DE.lo ) > 0x0FFF)
+	if((Registers.AF.hi + Registers.DE.lo ) > 0x0FFF)
 		Flag.C = 1;
 	
 	Registers.AF.hi += Registers.DE.lo;
+		
+	Flag.Z = !Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
@@ -1285,10 +1517,12 @@ void CPU::opCode0x84(){	//ADD A, H; 4
 	
 	if(((Registers.AF.hi & 0x0FFF)+(Registers.HL.hi & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo + Registers.HL.hi ) > 0x0FFF)
+	if((Registers.AF.hi + Registers.HL.hi ) > 0x0FFF)
 		Flag.C = 1;
 	
 	Registers.AF.hi += Registers.HL.hi;
+			
+	Flag.Z = !Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
@@ -1302,17 +1536,39 @@ void CPU::opCode0x85(){	//ADD A, L; 4
 	
 	if(((Registers.AF.hi & 0x0FFF)+(Registers.HL.lo & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo + Registers.HL.lo ) > 0x0FFF)
+	if((Registers.AF.hi + Registers.HL.lo ) > 0x0FFF)
 		Flag.C = 1;
 	
 	Registers.AF.hi += Registers.HL.lo;
+			
+	Flag.Z = !Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
 	Registers.PC.word ++;
 }
 
-void CPU::opCode0x86();//ADD A, (HL); 8
+void CPU::opCode0x86(){	//ADD A, (HL); 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	uint8_t val = mem->ReadByte(Registers.HL.word);
+	
+	if(((Registers.AF.hi & 0x0FFF)+(val & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + val ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += val;
+			
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void CPU::opCode0x87(){	//ADD A, A; 4
 	Flag.N = 0;
 	Flag.H = 0;
@@ -1320,36 +1576,350 @@ void CPU::opCode0x87(){	//ADD A, A; 4
 	
 	if(((Registers.AF.hi & 0x0FFF) * 2)> 0x0FFF)
 		Flag.H = 1;
-	if((Registers.AF.lo * 2) > 0x0FFF)
+	if((Registers.AF.hi * 2) > 0x0FFF)
 		Flag.C = 1;
 	
 	Registers.AF.hi *= 2;
+			
+	Flag.Z = !Registers.AF.hi;
 	
 	Clock.m = 1;
 	Clock.t = 4;
 	Registers.PC.word ++;
 }
 
-void CPU::opCode0x88();//ADC A, B; 4
-void CPU::opCode0x89();//ADC A, C; 4
-void CPU::opCode0x8A();//ADC A, D; 4
-void CPU::opCode0x8B();//ADC A, E; 4
-void CPU::opCode0x8C();//ADC A, H; 4
-void CPU::opCode0x8D();//ADC A, L; 4
-void CPU::opCode0x8E();//ADC A, (HL); 8
-void CPU::opCode0x8F();//ADC A, A; 4
+void CPU::opCode0x88(){	//ADC A, B; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.BC.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + Registers.BC.hi ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi += Registers.BC.hi;
+	
+	Registers.AF.hi += Flag.C;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
 
-void CPU::opCode0x90();//SUB B; 4
-void CPU::opCode0x91();//SUB C; 4
-void CPU::opCode0x92();//SUB D; 4
-void CPU::opCode0x93();//SUB E; 4
-void CPU::opCode0x94();//SUB H; 4
-void CPU::opCode0x95();//SUB L; 4
-void CPU::opCode0x96();//SUB (HL); 8
-void CPU::opCode0x97();//SUB A; 4
-void CPU::opCode0x98();//SBC A, B; 4
-void CPU::opCode0x99();//SBC A, C; 4
-void CPU::opCode0x9A();//SBC A, D; 4
+void CPU::opCode0x89(){	//ADC A, C; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.BC.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + Registers.BC.lo ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.BC.lo;
+	
+	Registers.AF.hi += Flag.C;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x8A(){	//ADC A, D; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.DE.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + Registers.DE.hi ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.DE.hi;
+	
+	Registers.AF.hi += Flag.C;
+	
+	Flag.Z != Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x8B(){	//ADC A, E; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.DE.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + Registers.DE.lo ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.DE.lo;
+		
+	Registers.AF.hi += Flag.C;	
+		
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x8C(){	//ADC A, H; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.HL.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + Registers.HL.hi ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.HL.hi;
+			
+	Registers.AF.hi += Flag.C;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x8D(){	//ADC A, L; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)+(Registers.HL.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + Registers.HL.lo ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += Registers.HL.lo;
+	
+	Registers.AF.hi += Flag.C;
+			
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x8E(){	//ADC A, (HL); 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	uint8_t val = mem->ReadByte(Registers.HL.word);
+	
+	if(((Registers.AF.hi & 0x0FFF)+(val & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + val ) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi += val;
+			
+	Registers.AF.hi += Flag.C;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x8F(){	//ADC A, A; 4
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF) * 2)> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi * 2) > 0x0FFF)
+		Flag.C = 1;
+	
+	Registers.AF.hi *= 2;
+	
+	Registers.AF.hi += Flag.C;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x90(){	//SUB B; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)-(Registers.BC.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - Registers.BC.hi ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= Registers.BC.hi;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x91(){	//SUB C; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)-(Registers.BC.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - Registers.BC.lo ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= Registers.BC.lo;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x92(){	//SUB D; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)-(Registers.DE.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - Registers.DE.hi ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= Registers.DE.hi;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x93(){	//SUB E; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)-(Registers.DE.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - Registers.DE.lo ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= Registers.DE.lo;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x94(){	//SUB H; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)-(Registers.HL.hi & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - Registers.HL.hi ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= Registers.HL.hi;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x95(){	//SUB L; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	if(((Registers.AF.hi & 0x0FFF)-(Registers.HL.lo & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - Registers.HL.lo ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= Registers.HL.lo;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x96(){	//SUB (HL); 8
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	uint8_t val = mem->ReadByte(Registers.HL.word);
+	
+	
+	if(((Registers.AF.hi & 0x0FFF)-(val & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi - val ) > 0x0FFF)
+		Flag.C = 1;
+		
+	Registers.AF.hi -= val;
+	
+	Flag.Z = !Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x97(){	//SUB A; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	Registers.AF.hi = 0;
+	
+	Flag.Z = 0;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x98(){	//SBC A, B; 4
+
+}
+
+void CPU::opCode0x99(){	//SBC A, C; 4
+
+}
+
+void CPU::opCode0x9A(){	//SBC A, D; 4
+
+}
+
 void CPU::opCode0x9B();//SBC A, E; 4
 void CPU::opCode0x9C();//SBC A, H; 4
 void CPU::opCode0x9D();//SBC A, L; 4
@@ -1392,6 +1962,7 @@ void CPU::opCode0xBF();//CP A; 4
 
 void CPU::opCode0xC0();//RET NZ; 20/8
 void CPU::opCode0xC1();//POP BC; 12
+
 void CPU::opCode0xC2(){	//JP NZ, a16; 16
 	Clock.t = 12;
 	
@@ -1415,6 +1986,7 @@ void CPU::opCode0xC6();//ADD A, d8
 void CPU::opCode0xC7();//RST 00H; 16
 void CPU::opCode0xC8();//RET Z; 20/8
 void CPU::opCode0xC9();//RET; 16
+
 void CPU::opCode0xCA(){	//JP Z, a16; 16/12
 	Clock.t = 12;
 	
@@ -1434,6 +2006,7 @@ void CPU::opCode0xCF();//RST 08H; 16
 
 void CPU::opCode0xD0();//RET NC; 20/8
 void CPU::opCode0xD1();//POP DE; 12
+
 void CPU::opCode0xD2(){	//JP NC, a16; 16/12
 	Clock.t = 12;
 	
@@ -1446,12 +2019,14 @@ void CPU::opCode0xD2(){	//JP NC, a16; 16/12
 }
 
 //void CPU::opCode0xD3();//BLANK
+
 void CPU::opCode0xD4();//CALL NC, a16; 24/12
 void CPU::opCode0xD5();//PUSH DE; 16
 void CPU::opCode0xD6();//SUB d8; 8
 void CPU::opCode0xD7();//RST 10H; 16
 void CPU::opCode0xD8();//RET C; 20/8
 void CPU::opCode0xD9();//RETI; 16
+
 void CPU::opCode0xDA(){	//JP C, a16; 16/12
 	Clock.t = 12;
 	
@@ -1464,19 +2039,26 @@ void CPU::opCode0xDA(){	//JP C, a16; 16/12
 }
 
 //void CPU::opCode0xDB();//BLANK
+
 void CPU::opCode0xDC();//CALL C, a16; 24/12
+
 //void CPU::opCode0xDD();//BLANK
+
 void CPU::opCode0xDE();//SBC A, d8; 8
 void CPU::opCode0xDF();//RST 18H; 16
 
 void CPU::opCode0xE0();//LDH (a8), A; 12
 void CPU::opCode0xE1();//POP HL; 12
 void CPU::opCode0xE2();//LD (C), A; 8
+
 //void CPU::opCode0xE3();//BLANK
+
 //void CPU::opCode0xE4();//BLANK
+
 void CPU::opCode0xE5();//PUSH HL; 16
 void CPU::opCode0xE6();//AND d8; 8
 void CPU::opCode0xE7();//RST 20H; 16
+
 void CPU::opCode0xE8(){	//ADD SP, r8; 16
 	uint8_t value = MEM->ReadByte(Registers.PC.word+1);
 	
@@ -1495,11 +2077,21 @@ void CPU::opCode0xE8(){	//ADD SP, r8; 16
 	Registers.PC.word += 2;
 }
 
-void CPU::opCode0xE9();//JP (HL); 4
+void CPU::opCode0xE9(){	//JP (HL); 4
+	Registers.PC.word = mem->ReadWord(Registers.HL.word);
+	
+	Clock.m = 1;
+	Clock.t = 4;
+}
+
 void CPU::opCode0xEA();//LD (a16), A; 16
+
 //void CPU::opCode0xEB();//BLANK
+
 //void CPU::opCode0xEC();//BLANK
+
 //void CPU::opCode0xED();//BLANK
+
 void CPU::opCode0xEE();//XOR d8; 8
 void CPU::opCode0xEF();//RST 28H; 16
 
@@ -1507,7 +2099,9 @@ void CPU::opCode0xF0();//LDH A, (a8); 12
 void CPU::opCode0xF1();//POP AF; 12
 void CPU::opCode0xF2();//LD A, (C); 8
 void CPU::opCode0xF3();//DI; 4
+
 //void CPU::opCode0xF4();//BLANK
+
 void CPU::opCode0xF5();//PUSH AF; 16
 void CPU::opCode0xF6();//OR d8; 8
 void CPU::opCode0xF7();//RST 30H; 16
@@ -1515,7 +2109,33 @@ void CPU::opCode0xF8();//LD HL, SP+r8; 12
 void CPU::opCode0xF9();//LD SP, HL; 8
 void CPU::opCode0xFA();//LD A, (a16); 16
 void CPU::opCode0xFB();//EI; 4
+
 //void CPU::opCode0xFC();//BLANK
 //void CPU::opCode0xFD();//BLANK
-void CPU::opCode0xFE();//CP d8; 8
+
+void CPU::opCode0xFE(){	//CP d8; 8
+	Flag.N = 1;
+	Flag.Z = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+	
+	uint8_t ayy, val;
+	
+	ayy = Registers.AF.hi;
+	val = mem->ReadByte(Registers.PC.word + 1);
+	
+	if(((ayy & 0x0FFF)-(val & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	
+	if(ayy > val)
+		Flag.C =1;
+	
+	if(ayy == val)
+		Flag.Z = 1;
+	
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
+
 void CPU::opCode0xFF();//RST 38H; 16
