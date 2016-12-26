@@ -1929,14 +1929,64 @@ void CPU::opCode0x98(){	//SBC A, B; 4
 }
 
 void CPU::opCode0x99(){	//SBC A, C; 4
-
+	Flag.N = 1;
+	Flag.H = 0;
+	
+	Registers.AF.hi = Registers.AF.hi - Registers.BC.lo + Flag.C;
+	
+	Flag.C = 0;
+	
+	if((Registers.AF.hi & 0x0FFF)> 0x0FFF)
+		Flag.H = 1;
+	if(Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+	
+	Flag.Z != Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;	
 }
 
 void CPU::opCode0x9A(){	//SBC A, D; 4
-
+	Flag.N = 1;
+	Flag.H = 0;
+	
+	Registers.AF.hi = Registers.AF.hi - Registers.DE.hi + Flag.C;
+	
+	Flag.C = 0;
+	
+	if((Registers.AF.hi & 0x0FFF)> 0x0FFF)
+		Flag.H = 1;
+	if(Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+	
+	Flag.Z != Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;	
 }
 
-void CPU::opCode0x9B();//SBC A, E; 4
+void CPU::opCode0x9B(){	//SBC A, E; 4
+	Flag.N = 1;
+	Flag.H = 0;
+	
+	Registers.AF.hi = Registers.AF.hi - Registers.DE.lo + Flag.C;
+	
+	Flag.C = 0;
+	
+	if((Registers.AF.hi & 0x0FFF)> 0x0FFF)
+		Flag.H = 1;
+	if(Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+	
+	Flag.Z != Registers.AF.hi;
+	
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;	
+}
 void CPU::opCode0x9C();//SBC A, H; 4
 void CPU::opCode0x9D();//SBC A, L; 4
 void CPU::opCode0x9E();//SBC A, (HL); 8
