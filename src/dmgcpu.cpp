@@ -2587,7 +2587,14 @@ void CPU::opCode0xE9(){	//JP (HL); 4
 	Clock.t = 4;
 }
 
-void CPU::opCode0xEA();//LD (a16), A; 16
+void CPU::opCode0xEA(){	//LD (a16), A; 16
+	//check
+	MEM->WriteByte(Registers.PC.word+1, Registers.AF.hi);
+
+	Clock.m = 2;
+	Clock.t = 16;
+	Registers.PC.word += 2;
+}
 
 //void CPU::opCode0xEB();//BLANK
 
@@ -2595,7 +2602,17 @@ void CPU::opCode0xEA();//LD (a16), A; 16
 
 //void CPU::opCode0xED();//BLANK
 
-void CPU::opCode0xEE();//XOR d8; 8
+void CPU::opCode0xEE(){	//XOR d8; 8
+	Registers.AF.hi = Registers.AF.hi ^ MEM->ReadByte(Registers.PC.word+1);
+	resetFlags();
+	if(!Registers.AF.hi)
+		Flag.Z = 1;
+
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
+
 void CPU::opCode0xEF();//RST 28H; 16
 
 void CPU::opCode0xF0();//LDH A, (a8); 12
@@ -2611,6 +2628,7 @@ void CPU::opCode0xF7();//RST 30H; 16
 void CPU::opCode0xF8();//LD HL, SP+r8; 12
 void CPU::opCode0xF9();//LD SP, HL; 8
 void CPU::opCode0xFA();//LD A, (a16); 16
+
 void CPU::opCode0xFB();//EI; 4
 
 //void CPU::opCode0xFC();//BLANK
