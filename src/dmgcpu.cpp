@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <cstdint>
-#include DMGCPU.h
+#include "DMGCPU.h"
 #include "Emulator.h"
 #include "MEM.h"
 #include "GPU.h"
@@ -2768,7 +2768,27 @@ void CPU::opCode0xC5(){	//PUSH BC
 	Registers.PC.word += 1;
 }
 
-void CPU::opCode0xC6();//ADD A, d8
+void CPU::opCode0xC6(){	//ADD A, d8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+
+	uint8_t temp = MEM->ReadByte(Registers.PC.word +1);
+
+	if(((Registers.AF.hi & 0x0FFF)+(temp & 0x0FFF))> 0x0FFF)
+		Flag.H = 1;
+	if((Registers.AF.hi + temp ) > 0x0FFF)
+		Flag.C = 1;
+
+	Registers.AF.hi += temp;
+
+	Flag.Z = !Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
 void CPU::opCode0xC7(){	//RST 00H; 16
 	MEM->pushtoStack(Register.PC.word);
 	Register.PC.word = 0x0000 + 0x00;
@@ -2776,8 +2796,24 @@ void CPU::opCode0xC7(){	//RST 00H; 16
 	Clock.t = 16;
 }
 
-void CPU::opCode0xC8();//RET Z; 20/8
-void CPU::opCode0xC9();//RET; 16
+void CPU::opCode0xC8(){	//RET Z; 20/8
+	Registers.PC.word += 1;
+	Clock.t = 8;
+
+	if(Flag.Z){
+		Registers.PC.word = MEM->popoffStack();
+		Clock.t = 20;
+	}
+
+	Clock.m = 1;
+}
+
+void CPU::opCode0xC9(){	//RET; 16
+	Registers.PC.word = MEM->popoffStack();
+
+	Clock.m = 1;
+	Clock.t = 16;
+}
 
 void CPU::opCode0xCA(){	//JP Z, a16; 16/12
 	Clock.t = 12;
@@ -2832,31 +2868,76 @@ void CPU::opCode0xD5(){	//PUSH DE; 16
 	Registers.PC.word += 1;
 }
 
-void CPU::opCode0xD6();//SUB d8; 8
+void CPU::opCode0xD6(){	//SUB d8; 8
+	Registers.AF.hi = Registers.AF.hi - ReadByte(Registers.PC.word+1);
+
+	resetFlags();
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.N = 1;
+
+	if(Registers.AF.hi < 0)
+		Flag.C = 1;
+
+	if(Registers.AF.hi & 0x00FF & 0x10)
+		Flag.H = 1;
+
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
+
 void CPU::opCode0xD7(){	//RST 10H; 16
 	MEM->pushtoStack(Register.PC.word);
-	Register.PC.word = 0x0000 + 0x10;
+	Registers.PC.word = 0x0000 + 0x10;
 	Clock.m = 1;
 	Clock.t = 16;
 }
 
-void CPU::opCode0xD8();//RET C; 20/8
-void CPU::opCode0xD9();//RETI; 16
+void CPU::opCode0xD8(){	//RET C; 20/8
+	Registers.PC.word += 1;
+	Clock.t = 8;
+
+	if(Flag.C){
+		Registers.PC.word = MEM->popoffStack();
+		Clock.t = 20;
+	}
+
+	Clock.m = 1;
+}
+
+void CPU::opCode0xD9(){	//RETI; 16
+	Registers.PC.word = MEM->popoffStack();
+	Emulator->InteruptsEnabled = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+}
 
 void CPU::opCode0xDA(){	//JP C, a16; 16/12
 	Clock.t = 12;
 
-	if(Flag.C == 1){
+	if(Flag.C){
 		Registers.PC.word = MEM->ReadWord(Registers.PC.word + 1);
 		Clock.t = 16;
-	}
+	}else Registers.PC.word += 3;
 
 	Clock.m = 3
 }
 
 //void CPU::opCode0xDB();//BLANK
 
-void CPU::opCode0xDC();//CALL C, a16; 24/12
+void CPU::opCode0xDC(){	//CALL C, a16; 24/12
+	Clock.t = 12;
+
+	if(Flag.C){
+		Registers.PC.word = MEM->ReadWord(Registers.PC.word+1);
+		Clock.t = 24;
+	}else
+		Registers.PC.word += 3;
+
+	Clock.m = 24;
+}
 
 //void CPU::opCode0xDD();//BLANK
 
@@ -2903,7 +2984,19 @@ void CPU::opCode0xE5(){	//PUSH HL; 16
 	Registers.PC.word += 1;
 }
 
-void CPU::opCode0xE6();//AND d8; 8
+void CPU::opCode0xE6(){	//AND d8; 8
+	Registers.AF.hi = Registers.AF.hi & MEM->ReadByte(Registers.PC.word+1);
+
+	resetFlags();
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
+
 void CPU::opCode0xE7(){	//RST 20H; 16
 	MEM->pushtoStack(Register.PC.word);
 	Register.PC.word = 0x0000 + 0x20;
@@ -3003,7 +3096,13 @@ void CPU::opCode0xF2(){	//LD A, (C); 8
 	Registers.PC.word += 2;
 }
 
-void CPU::opCode0xF3();//DI; 4
+void CPU::opCode0xF3(){	//DI; 4
+	Emulator->InteruptsEnabled = false;
+
+	Clock.m = 1;
+	Clock.t  = 4;
+	Registers.PC.word += 1;
+}
 
 //void CPU::opCode0xF4();//BLANK
 
@@ -3014,7 +3113,18 @@ void CPU::opCode0xF5(){	//PUSH AF; 16
 	Registers.PC.word += 1;
 }
 
-void CPU::opCode0xF6();//OR d8; 8
+void CPU::opCode0xF6(){	//OR d8; 8
+	Registers.AF.hi = Registers.AF.hi | MEM->ReadByte(Registers.PC.word+1);
+
+	resetFlags();
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
+
 void CPU::opCode0xF7(){	//RST 30H; 16
 	MEM->pushtoStack(Register.PC.word);
 	Register.PC.word = 0x0000 + 0x30;
@@ -3022,8 +3132,19 @@ void CPU::opCode0xF7(){	//RST 30H; 16
 	Clock.t = 16;
 }
 
-void CPU::opCode0xF8();//LD HL, SP+r8; 12
-void CPU::opCode0xF9(){		//LD SP, HL; 8
+void CPU::opCode0xF8(){	//LD HL, SP+r8; 12
+	Registers.HL.word = MEM->stackPointer + (Registers.PC.word+1);
+	resetFlags();
+
+	if(Registers.HL.word < 0)
+		Flag.C =1;
+
+	Clock.m = 2;
+	Clock.t = 12;
+	Registers.PC.word += 2;
+}
+
+void CPU::opCode0xF9(){	//LD SP, HL; 8
 	MEM->stackPointer = Registers.HL.word;
 
 	Clock.m = 1;
@@ -3032,14 +3153,20 @@ void CPU::opCode0xF9(){		//LD SP, HL; 8
 }
 
 void CPU::opCode0xFA();//LD A, (a16); 16
-	Registers.AF.hi = MEM->ReadWord(Registers.PC.word + 1);
+	Registers.AF.hi = MEM->ReadWord(MEM->ReadWord(Registers.PC.word + 1));
 
 	Clock.m = 3;
 	Clock.t = 16;
 	Registers.PC.word += 3;
 }
 
-void CPU::opCode0xFB();//EI; 4
+void CPU::opCode0xFB(){	//EI; 4
+	Emulator->InteruptsEnabled = true;
+
+	Clock.m = 1;
+	Clock.t  = 4;
+	Registers.PC.word += 1;
+}
 
 //void CPU::opCode0xFC();//BLANK
 
@@ -3054,7 +3181,7 @@ void CPU::opCode0xFE(){	//CP d8; 8
 	uint8_t ayy, val;
 
 	ayy = Registers.AF.hi;
-	val = mem->ReadByte(Registers.PC.word + 1);
+	val = MEM->ReadByte(Registers.PC.word + 1);
 
 	if(((ayy & 0x0FFF)-(val & 0x0FFF))> 0x0FFF)
 		Flag.H = 1;
