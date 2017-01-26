@@ -2312,36 +2312,307 @@ void CPU::opCode0x9B(){	//SBC A, E; 4
 	Clock.t = 4;
 	Registers.PC.word ++;
 }
-void CPU::opCode0x9C();//SBC A, H; 4
-void CPU::opCode0x9D();//SBC A, L; 4
-void CPU::opCode0x9E();//SBC A, (HL); 8
-void CPU::opCode0x9F();//SBC A, A; 4
 
-void CPU::opCode0xA0();//AND B; 4
-void CPU::opCode0xA1();//AND C; 4
-void CPU::opCode0xA2();//AND D; 4
-void CPU::opCode0xA3();//AND E; 4
-void CPU::opCode0xA4();//AND H; 4
-void CPU::opCode0xA5();//AND L; 4
-void CPU::opCode0xA6();//AND (HL); 8
-void CPU::opCode0xA7();//AND A; 4
-void CPU::opCode0xA8();//XOR B; 4
-void CPU::opCode0xA9();//XOR C; 4
-void CPU::opCode0xAA();//XOR D; 4
-void CPU::opCode0xAB();//XOR E; 4
-void CPU::opCode0xAC();//XOR H; 4
-void CPU::opCode0xAD();//XOR L; 4
-void CPU::opCode0xAE();//XOR (HL); 8
-void CPU::opCode0xAF();//XOR A; 4
+void CPU::opCode0x9C(){	//SBC A, H; 4
+	Flag.N = 1;
+	Flag.H = 0;
 
-void CPU::opCode0xB0();//OR B; 4
-void CPU::opCode0xB1();//OR C; 4
-void CPU::opCode0xB2();//OR D; 4
-void CPU::opCode0xB3();//OR E; 4
-void CPU::opCode0xB4();//OR H; 4
-void CPU::opCode0xB5();//OR L; 4
-void CPU::opCode0xB6();//OR (HL); 8
-void CPU::opCode0xB7();//OR A; 4
+	Registers.AF.hi = Registers.AF.hi - Registers.HL.hi + Flag.C;
+
+	Flag.C = 0;
+
+	if((Registers.AF.hi & 0x0FFF)> 0x0FFF)
+		Flag.H = 1;
+	if(Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+
+	Flag.Z != Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x9D(){	//SBC A, L; 4
+	Flag.N = 1;
+	Flag.H = 0;
+
+	Registers.AF.hi = Registers.AF.hi - Registers.HL.lo + Flag.C;
+
+	Flag.C = 0;
+
+	if((Registers.AF.hi & 0x0FFF)> 0x0FFF)
+		Flag.H = 1;
+	if(Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+
+	Flag.Z != Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x9E(){	//SBC A, (HL); 8
+	Flag.N = 1;
+	Flag.H = 0;
+
+	Registers.AF.hi = Registers.AF.hi - ReadByte(Registers.HL.word) + Flag.C;
+
+	Flag.C = 0;
+
+	if((Registers.AF.hi & 0x0FFF)> 0x0FFF)
+		Flag.H = 1;
+	if(Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+
+	Flag.Z != Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word ++;
+}
+
+void CPU::opCode0x9F(){	//SBC A, A; 4
+	Flag.N = 1;
+	Flag.H = 0;
+
+	Registers.AF.hi = Flag.C;
+
+	Flag.C = 0;
+	Flag.Z != Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word ++;
+}
+
+
+void CPU::opCode0xA0(){	//AND B; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.BC.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA1(){	//AND C; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.BC.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA2(){	//AND D; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.DE.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA3(){	//AND E; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.DE.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA4(){	//AND H; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.HL.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA5(){	//AND L; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.HL.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA6(){	//AND (HL); 8
+	Registers.AF.hi = Registers.AF.hi & ReadByte(Registers.HL.word);
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA7(){	//AND A; 4
+	Registers.AF.hi = Registers.AF.hi & Registers.AF.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Flag.H = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA8(){	//XOR B; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.BC.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xA9(){	//XOR C; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.BC.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xAA(){	//XOR D; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.DE.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xAB(){	//XOR E; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.DE.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xAC(){	//XOR H; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.HL.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xAD(){	//XOR L; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.HL.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xAE(){	//XOR (HL); 8
+	Registers.AF.hi = Registers.AF.hi ^ ReadByte(Regusters.HL.word);
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xAF(){	//XOR A; 4
+	Registers.AF.hi = Registers.AF.hi ^ Registers.AF.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+
+void CPU::opCode0xB0(){	//OR B; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.BC.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB1(){	//OR C; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.BC.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB2(){	//OR D; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.DE.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB3(){	//OR E; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.DE.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB4(){	//OR H; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.HL.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB5(){	//OR L; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.HL.lo;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB6(){	//OR (HL); 8
+	Registers.AF.hi = Registers.AF.hi | ReadByte(Registers.HL.word);
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xB7(){	//OR A; 4
+	Registers.AF.hi = Registers.AF.hi | Registers.AF.hi;
+	if(!Registers.AF.hi)
+		Flags.Z = 1;
+	Clock.m = 1;
+	Clock.t = 4;
+	Registers.PC.word += 1;
+}
+
 
 void CPU::opCode0xB8(){	//CP B; 4
 	int temp;
