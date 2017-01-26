@@ -23,6 +23,8 @@ CPU::uint32_t getClock(){
 
 CPU::uint16_t getPC();
 
+CPU::void setPC(uint16_t);
+
 /*
 Counter = InterruptPeriod
 PC = InitialPC
@@ -2705,8 +2707,7 @@ void CPU::opCode0xBD(){	//CP L; 4
 }
 
 void CPU::opCode0xBE(){	//CP (HL); 8
-	int temp;
-	temp = Registers.AF.hi - MEM->ReadByte(Registers.HL.word);
+	int temp;	temp = Registers.AF.hi - MEM->ReadByte(Registers.HL.word);
 	Flag.N = 1;
 	if(!temp)
 		Flag.Z = 1;
@@ -2735,7 +2736,12 @@ void CPU::opCode0xBF(){	//CP A; 4
 }
 
 void CPU::opCode0xC0();//RET NZ; 20/8
-void CPU::opCode0xC1();//POP BC; 12
+void CPU::opCode0xC1(){	//POP BC; 12
+	Registers.BC.word = MEM->popoffStack();
+	Clock.m = 1;
+	Clock.t = 12;
+	Registers.PC.word += 1;
+}
 
 void CPU::opCode0xC2(){	//JP NZ, a16; 16
 	Clock.t = 12;
@@ -2755,9 +2761,21 @@ void CPU::opCode0xC3(){	//JP a16; 16
 }
 
 void CPU::opCode0xC4();//CALL NZ, a16
-void CPU::opCode0xC5();//PUSH BC
+void CPU::opCode0xC5(){	//PUSH BC
+	MEM->pushtoStack(Register.BC.word);
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
 void CPU::opCode0xC6();//ADD A, d8
-void CPU::opCode0xC7();//RST 00H; 16
+void CPU::opCode0xC7(){	//RST 00H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x00;
+	Clock.m = 1;
+	Clock.t = 16;
+}
+
 void CPU::opCode0xC8();//RET Z; 20/8
 void CPU::opCode0xC9();//RET; 16
 
@@ -2776,10 +2794,22 @@ void CPU::opCode0xCB();//PREFIX CB; 4
 void CPU::opCode0xCC();//CALL Z, a16; 24/12
 void CPU::opCode0xCD();//CALL a16; 24
 void CPU::opCode0xCE();//ADC A, d8; 8
-void CPU::opCode0xCF();//RST 08H; 16
+void CPU::opCode0xCF(){	//RST 08H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x08;
+	Clock.m = 1;
+	Clock.t = 16;
+}
+
 
 void CPU::opCode0xD0();//RET NC; 20/8
-void CPU::opCode0xD1();//POP DE; 12
+void CPU::opCode0xD1(){	//POP DE; 12
+	Registers.DE.word = MEM->popoffStack();
+	Clock.m = 1;
+	Clock.t = 12;
+	Registers.PC.word += 1;
+}
+
 
 void CPU::opCode0xD2(){	//JP NC, a16; 16/12
 	Clock.t = 12;
@@ -2795,9 +2825,21 @@ void CPU::opCode0xD2(){	//JP NC, a16; 16/12
 //void CPU::opCode0xD3();//BLANK
 
 void CPU::opCode0xD4();//CALL NC, a16; 24/12
-void CPU::opCode0xD5();//PUSH DE; 16
+void CPU::opCode0xD5(){	//PUSH DE; 16
+	MEM->pushtoStack(Register.DE.word);
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
 void CPU::opCode0xD6();//SUB d8; 8
-void CPU::opCode0xD7();//RST 10H; 16
+void CPU::opCode0xD7(){	//RST 10H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x10;
+	Clock.m = 1;
+	Clock.t = 16;
+}
+
 void CPU::opCode0xD8();//RET C; 20/8
 void CPU::opCode0xD9();//RETI; 16
 
@@ -2819,19 +2861,56 @@ void CPU::opCode0xDC();//CALL C, a16; 24/12
 //void CPU::opCode0xDD();//BLANK
 
 void CPU::opCode0xDE();//SBC A, d8; 8
-void CPU::opCode0xDF();//RST 18H; 16
+void CPU::opCode0xDF(){	//RST 18H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x18;
+	Clock.m = 1;
+	Clock.t = 16;
+}
 
-void CPU::opCode0xE0();//LDH (a8), A; 12
-void CPU::opCode0xE1();//POP HL; 12
-void CPU::opCode0xE2();//LD (C), A; 8
+
+void CPU::opCode0xE0(){	//LDH (a8), A; 12
+	MEM->WriteByte(0xFF00 + (Registers.PC.word + 1), Registers.AF.hi);
+
+	Clock.m = 2;
+	Clock.t = 12;
+	Registers.PC.word += 2;
+}
+
+void CPU::opCode0xE1(){	//POP HL; 12
+	Registers.HL.word = MEM->popoffStack();
+	Clock.m = 1;
+	Clock.t = 12;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xE2(){	//LD (C), A; 8
+	MEM->WriteByte(0xFF00 + Registers.BC.lo, Registers.AF.hi);
+
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
 
 //void CPU::opCode0xE3();//BLANK
 
 //void CPU::opCode0xE4();//BLANK
 
-void CPU::opCode0xE5();//PUSH HL; 16
+void CPU::opCode0xE5(){	//PUSH HL; 16
+	MEM->pushtoStack(Register.HL.word);
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
 void CPU::opCode0xE6();//AND d8; 8
-void CPU::opCode0xE7();//RST 20H; 16
+void CPU::opCode0xE7(){	//RST 20H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x20;
+	Clock.m = 1;
+	Clock.t = 16;
+}
+
 
 void CPU::opCode0xE8(){	//ADD SP, r8; 16
 	uint8_t value = MEM->ReadByte(Registers.PC.word+1);
@@ -2884,21 +2963,81 @@ void CPU::opCode0xEE(){	//XOR d8; 8
 	Registers.PC.word += 2;
 }
 
-void CPU::opCode0xEF();//RST 28H; 16
+void CPU::opCode0xEF(){	//RST 28H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x28;
+	Clock.m = 1;
+	Clock.t = 16;
+}
 
-void CPU::opCode0xF0();//LDH A, (a8); 12
-void CPU::opCode0xF1();//POP AF; 12
-void CPU::opCode0xF2();//LD A, (C); 8
+
+void CPU::opCode0xF0(){	//LDH A, (a8); 12
+	Registers.AF.hi = MEM->ReadByte(0xFF00 + (Registers.PC.word + 1));
+
+	Clock.m = 2;
+	Clock.t = 12;
+	Registers.PC.word += 2;
+}
+
+void CPU::opCode0xF1(){	//POP AF; 12
+	Registers.AF.word = MEM->popoffStack();
+
+	Flag.N = 0;
+	if(!Registers.AF.word)
+		Flag.Z = 1;
+	if(Registers.AF.word < 0)
+		Flag.C = 1;
+	Flag.H = (Registers.AF.word && 0xf) && 0x10;	//half carry check
+
+
+	Clock.m = 1;
+	Clock.t = 12;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCode0xF2(){	//LD A, (C); 8
+	Registers.AF.hi = MEM->ReadByte(0xFF00 + Registers.BC.lo);
+
+	Clock.m = 2;
+	Clock.t = 12;
+	Registers.PC.word += 2;
+}
+
 void CPU::opCode0xF3();//DI; 4
 
 //void CPU::opCode0xF4();//BLANK
 
-void CPU::opCode0xF5();//PUSH AF; 16
+void CPU::opCode0xF5(){	//PUSH AF; 16
+	MEM->pushtoStack(Register.AF.word);
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
 void CPU::opCode0xF6();//OR d8; 8
-void CPU::opCode0xF7();//RST 30H; 16
+void CPU::opCode0xF7(){	//RST 30H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x30;
+	Clock.m = 1;
+	Clock.t = 16;
+}
+
 void CPU::opCode0xF8();//LD HL, SP+r8; 12
-void CPU::opCode0xF9();//LD SP, HL; 8
+void CPU::opCode0xF9(){		//LD SP, HL; 8
+	MEM->stackPointer = Registers.HL.word;
+
+	Clock.m = 1;
+	Clock.t = 8
+	Registers.PC.word += 1;
+}
+
 void CPU::opCode0xFA();//LD A, (a16); 16
+	Registers.AF.hi = MEM->ReadWord(Registers.PC.word + 1);
+
+	Clock.m = 3;
+	Clock.t = 16;
+	Registers.PC.word += 3;
+}
 
 void CPU::opCode0xFB();//EI; 4
 
@@ -2931,4 +3070,9 @@ void CPU::opCode0xFE(){	//CP d8; 8
 	Registers.PC.word += 2;
 }
 
-void CPU::opCode0xFF();//RST 38H; 16
+void CPU::opCode0xFF(){	//RST 38H; 16
+	MEM->pushtoStack(Register.PC.word);
+	Register.PC.word = 0x0000 + 0x38;
+	Clock.m = 1;
+	Clock.t = 16;
+}
