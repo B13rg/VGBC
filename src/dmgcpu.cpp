@@ -2903,6 +2903,7 @@ void CPU::opCode0xFA();//LD A, (a16); 16
 void CPU::opCode0xFB();//EI; 4
 
 //void CPU::opCode0xFC();//BLANK
+
 //void CPU::opCode0xFD();//BLANK
 
 void CPU::opCode0xFE(){	//CP d8; 8
