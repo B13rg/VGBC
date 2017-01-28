@@ -1,4 +1,5 @@
-#include <stdio.h>
+#include <fstream>
+#include <iostream>
 #include <cstdint>
 #include "DMGCPU.h"
 #include "MEM.h"
@@ -20,7 +21,7 @@ uint8_t hram[0x80];
 
 MEM::MEM(){
 	//load rom
-	loadRom("test");
+	loadRom("test.gb");
 	//run bios
 
 	biosLoaded = 1;
@@ -201,26 +202,27 @@ void MEM::ChangeROMRAMMode(uint8_t data){
 		activeRAmBank = 0;
 }
 
-void MEM::loadRom(const char *fname){
-	FILE *f;
-	uint8_t *buffer, romType, ramSize, numBanks, i,k;
+void MEM::loadRom(string filename){
+	fstream file(filename, ios::in | ios::binary | ios::ate);
+	streampos size;
+	uint8_t romType, ramSize, numBanks, i, k;
+	char * buffer;
 	uint16_t rombank;
 	unsigned long fileLen;
 	
-	f = fopen(fname, "rb");
-	if(f==NULL){
-		//file error
+	if (file.is_open()) {
+		size = file.tellg();
+		buffer = new char[size];
+		file.seekg(0, ios::beg);
+		file.read(buffer, size);
+		file.close();
+		cout << "File contents in memory" << endl;
+	}
+	else {
+		cout << "Error opening file" << endl;
 		return;
 	}
-	fseek(f, 0, SEEK_END);
-	fileLen = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	
-	buffer = (uint8_t *) ::operator new (fileLen+1);
-	
-	
-	fread(buffer, fileLen, 1, f);
-	fclose(f);
+
 	
 	switch(buffer[0x0147]){
 		case 1:
@@ -299,7 +301,7 @@ void MEM::loadRom(const char *fname){
 		default: break;
 	}
 	
-	delete(buffer);
+	delete [] buffer;
 }
 
 void MEM::pushtoStack(uint16_t addr){

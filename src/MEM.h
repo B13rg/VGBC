@@ -1,6 +1,7 @@
 #ifndef MEM_H
 #define MEM_H
 #include <cstdint>
+#include <string>
 using namespace std;
 
 class MEM{
@@ -49,7 +50,7 @@ class MEM{
 		void WriteByte(uint16_t addr, uint8_t data);	//write byte of data to memory space addr
 		void WriteWord(uint16_t addr, uint16_t data);	//Write word of data to memory space addr
 
-		void loadRom(const char *fname);	//Load game rom into memory
+		void loadRom(string filename);	//Load game rom into memory
 
 		void pushtoStack(uint16_t);
 		uint16_t popoffStack();

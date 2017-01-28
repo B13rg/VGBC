@@ -34,6 +34,8 @@ void Emulator::update(){
 		doInterupts();
 	}
 	//RenderScreen();
+
+	mem->WriteByte(0xFF00, 0);	//reset controller input
 }
 
 void Emulator::updateTimers(int cycles){

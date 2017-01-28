@@ -18,17 +18,14 @@ class Emulator{
 		int dividerRegister;
 		int dividerCounter;
 		int interruptMaster;
-
-
-		MEM* mem;
-		GPU* gpu;
-		CPU* Cpu;
-
-
+	
 	public:
 		Emulator();
 		~Emulator();
 
+		MEM* mem;
+		GPU* gpu;
+		CPU* Cpu;
 		void platform();
 
 		void updateTimers(int);

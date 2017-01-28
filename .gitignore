@@ -5,4 +5,7 @@ VGBC.sln
 VGBC.vcxproj
 VGBC.vcxproj.filters
 VGBC.vcxproj.user
+x64/
+Debug/
+.vs/
 
