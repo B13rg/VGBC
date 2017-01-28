@@ -1,29 +1,34 @@
 #include <stdio.h>
 #include <cstdint>
 #include "Emulator.h"
+#include "MEM.h"
+#include "GPU.h"
+#include "DMGCPU.h"
 
 
 using namespace std;
 
 Emulator::Emulator(){
-	mem = new MEM;
-	cpu = new CPU(mem);
+	mem = new MEM();
+	Cpu = new CPU(mem);
 	gpu = new GPU(mem);
 	cyclesThisUpdate = 0;
 	timerCounter = 1024;
 	platform();
 }
 
+Emulator::~Emulator() {}
+
 void Emulator::platform(){
 
 }
 
 void Emulator::update(){
-	int cycles;
+	int cycles = 0;
 	
 	while(cyclesThisUpdate < MAXCYCLES){
 		//ExecuteNextOpcode();
-		cyclesThisUpdate += cpu->getClock();
+		cyclesThisUpdate += Cpu->getClock();
 		updateTimers(cycles);
 		//updateGraphics(cycles);
 		doInterupts();
@@ -113,20 +118,20 @@ void Emulator::serviceInterrupt(int interrupt){
 	
 	mem->WriteByte(0xFF0F, req);
 	
-	mem->pushtoStack(cpu->getPC());
+	mem->pushtoStack(Cpu->getPC());
 	
 	switch(interrupt){
 		case 0:		//V-Blank
-			cpu->setPC(0x40);
+			Cpu->setPC(0x40);
 			break;
 		case 1:		//LCD
-			cpu->setPC(0x48);
+			Cpu->setPC(0x48);
 			break;
 		case 2:		//Timer
-			cpu->setPC(0x50);
+			Cpu->setPC(0x50);
 			break;
 		case 4:		//Joypad
-			cpu->setPC(0x60);
+			Cpu->setPC(0x60);
 			break;
 	}
 }

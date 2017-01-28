@@ -22,7 +22,8 @@ class Emulator{
 
 		MEM* mem;
 		GPU* gpu;
-		CPU* cpu;
+		CPU* Cpu;
+
 
 	public:
 		Emulator();

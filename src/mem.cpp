@@ -3,7 +3,7 @@
 #include "DMGCPU.h"
 #include "MEM.h"
 #include "GPU.h"
-#include "Emulator.h"
+//#include "Emulator.h"
 
 using namespace std;
 
@@ -20,11 +20,13 @@ uint8_t hram[0x80];
 
 MEM::MEM(){
 	//load rom
+	loadRom("test");
 	//run bios
+
 	biosLoaded = 1;
-	
-	stackPointer = 0xFFFE;
 }
+
+MEM::~MEM() {}
 
 
 
@@ -262,7 +264,7 @@ void MEM::loadRom(const char *fname){
 			numBanks = 128;
 			break;		
 		case 0x07:		//256 banks
-			numBanks = 256;
+			numBanks = 255;
 			break;		
 		case 0x52:	//72 banks
 			numBanks = 72;

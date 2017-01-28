@@ -2,6 +2,8 @@
 #define DMGCPU_H
 
 #include "MEM.h"
+//#include "Emulator.h"
+#include "GPU.h"
 
 using namespace std;
 
@@ -42,7 +44,9 @@ public:
 	uint32_t getClock();
 	uint16_t getPC();
 	
-	void setPC(int);
+	void setPC(uint16_t);
+
+	bool InteruptsEnabled;
 
 private:
 	//Regular OpCodes
@@ -57,7 +61,8 @@ private:
 	clock_t ClockTotal;
 	flags_t Flag;
 
-	MEM* mem;
+	MEM *mem;
+
 	void resetFlags();	//sets all flags to zero
 
 	//void opCode0x##(); Function; Cycles
@@ -293,7 +298,7 @@ private:
 	void opCode0xD8();//RET C; 20/8
 	void opCode0xD9();//RETI; 16
 	void opCode0xDA();//JP C, a16; 16/12
-	void opCode0xDB();//BLANK
+	void opCode0xDB(){};//BLANK
 	void opCode0xDC();//CALL C, a16; 24/12
 	void opCode0xDD(){};//BLANK
 	void opCode0xDE();//SBC A, d8; 8
@@ -332,5 +337,282 @@ private:
 	void opCode0xFD(){};//BLANK
 	void opCode0xFE();//CP d8; 8
 	void opCode0xFF();//RST 38H; 16
+
+
+	//CB opcodes
+	//void opCode0x##(); Function; Cycles
+	void opCodeCB0x00(); //NOP; 4
+	void opCodeCB0x01(); //LD BC, d16; 12
+	void opCodeCB0x02(); //LD (BC), A; 8
+	void opCodeCB0x03(); //INC BC; 8
+	void opCodeCB0x04(); //INC B; 4
+	void opCodeCB0x05(); //DEC B; 4
+	void opCodeCB0x06(); //LD B, d8; 8
+	void opCodeCB0x07(); //RLCA; 4
+	void opCodeCB0x08(); //LD (a16), SP; 20
+	void opCodeCB0x09(); //ADD HL, BC; 8
+	void opCodeCB0x0A(); //LD A, (BC); 8
+	void opCodeCB0x0B(); //DEC BC; 8
+	void opCodeCB0x0C(); //INC C; 4
+	void opCodeCB0x0D(); //DEC C; 4
+	void opCodeCB0x0E(); //LD C, d8; 8
+	void opCodeCB0x0F(); //RRCA; 4
+
+	void opCodeCB0x10();//STOP 0; 4
+	void opCodeCB0x11();//LD DE, D16; 12
+	void opCodeCB0x12();//LD (DE), A; 8
+	void opCodeCB0x13();//INC DE; 8
+	void opCodeCB0x14();//INC D; 4
+	void opCodeCB0x15();//DEC D; 4
+	void opCodeCB0x16();//LD D, D8; 8
+	void opCodeCB0x17();//RLA; 4
+	void opCodeCB0x18();//JR r8; 12
+	void opCodeCB0x19();//ADD HL, DE; 8
+	void opCodeCB0x1A();//LD A, (DE); 8
+	void opCodeCB0x1B();//DEC DE; 8
+	void opCodeCB0x1C();//INC E; 4
+	void opCodeCB0x1D();//DEC E; 4
+	void opCodeCB0x1E();//LD E, d8; 8
+	void opCodeCB0x1F();//RRA; 4
+
+	void opCodeCB0x20();//JR NZ, r8; 12/8
+	void opCodeCB0x21();//LD HL, d16; 12
+	void opCodeCB0x22();//LD(HL+), A; 8
+	void opCodeCB0x23();//INC HL; 8
+	void opCodeCB0x24();//INC H; 4
+	void opCodeCB0x25();//DEC H; 4
+	void opCodeCB0x26();//LD H, d8; 8
+	void opCodeCB0x27();//DAA; 4
+	void opCodeCB0x28();//JR Z, r8; 12/8
+	void opCodeCB0x29();//ADD HL, HL; 8
+	void opCodeCB0x2A();//LD A, (HL+); 8
+	void opCodeCB0x2B();//DEC HL; 8
+	void opCodeCB0x2C();//INC L; 4
+	void opCodeCB0x2D();//DEC L; 4
+	void opCodeCB0x2E();//LD L, d8; 8
+	void opCodeCB0x2F();//CPL; 4
+
+	void opCodeCB0x30();//JR NC, r8; 12/8
+	void opCodeCB0x31();//LD SP, d16; 12
+	void opCodeCB0x32();//LD (HL-), A; 8
+	void opCodeCB0x33();//INC SP; 8
+	void opCodeCB0x34();//INC (HL); 12
+	void opCodeCB0x35();//DEC (HL); 12
+	void opCodeCB0x36();//LD (HL), d8; 12
+	void opCodeCB0x37();//SCF; 4
+	void opCodeCB0x38();//JR C, r8; 12/8
+	void opCodeCB0x39();//ADD HL, SP; 8
+	void opCodeCB0x3A();//LD A, (HL-); 8
+	void opCodeCB0x3B();//DEC SP; 8
+	void opCodeCB0x3C();//INC A; 4
+	void opCodeCB0x3D();//DEC A; 4
+	void opCodeCB0x3E();//LD A, d8; 8
+	void opCodeCB0x3F();//CCF; 4
+
+	void opCodeCB0x40();//LD B, B; 4
+	void opCodeCB0x41();//LD B, C; 4
+	void opCodeCB0x42();//LD B, D; 4
+	void opCodeCB0x43();//LD B, E; 4
+	void opCodeCB0x44();//LD B, H; 4
+	void opCodeCB0x45();//LD B, L; 4
+	void opCodeCB0x46();//LD B, (HL); 8
+	void opCodeCB0x47();//LD B, A; 4
+	void opCodeCB0x48();//LD C, B; 4
+	void opCodeCB0x49();//LD C, C; 4
+	void opCodeCB0x4A();//LD C, D; 4
+	void opCodeCB0x4B();//LD C, E; 4
+	void opCodeCB0x4C();//LD C, H; 4
+	void opCodeCB0x4D();//LD C, L; 4
+	void opCodeCB0x4E();//LD C, (HL); 8
+	void opCodeCB0x4F();//LD C, A; 4
+
+	void opCodeCB0x50();//LD D, B; 4
+	void opCodeCB0x51();//LD D, C; 4
+	void opCodeCB0x52();//LD D, D; 4
+	void opCodeCB0x53();//LD D, E; 4
+	void opCodeCB0x54();//LD D, H; 4
+	void opCodeCB0x55();//LD D, L; 4
+	void opCodeCB0x56();//LD D, (HL); 8
+	void opCodeCB0x57();//LD D, A; 4
+	void opCodeCB0x58();//LD E, B; 4
+	void opCodeCB0x59();//LD E, C; 4
+	void opCodeCB0x5A();//LD E, D; 4
+	void opCodeCB0x5B();//LD E, E; 4
+	void opCodeCB0x5C();//LD E, H; 4
+	void opCodeCB0x5D();//LD E, L; 4
+	void opCodeCB0x5E();//LD E, (HL); 8
+	void opCodeCB0x5F();//LD E, A; 4
+
+	void opCodeCB0x60();//LD H, B; 4
+	void opCodeCB0x61();//LD H, C; 4
+	void opCodeCB0x62();//LD H, D; 4
+	void opCodeCB0x63();//LD H, E; 4
+	void opCodeCB0x64();//LD H, H; 4
+	void opCodeCB0x65();//LD H, L; 4
+	void opCodeCB0x66();//LD H, (HL); 8
+	void opCodeCB0x67();//LD H, A; 4
+	void opCodeCB0x68();//LD L, B; 4
+	void opCodeCB0x69();//LD L, C; 4
+	void opCodeCB0x6A();//LD L, D; 4
+	void opCodeCB0x6B();//LD L, E; 4
+	void opCodeCB0x6C();//LD L, H; 4
+	void opCodeCB0x6D();//LD L, L; 4
+	void opCodeCB0x6E();//LD L, (HL); 8
+	void opCodeCB0x6F();//LD L, A; 4
+
+	void opCodeCB0x70();//LD (HL), B; 8
+	void opCodeCB0x71();//LD (HL), C; 8
+	void opCodeCB0x72();//LD (HL), D; 8
+	void opCodeCB0x73();//LD (HL), E; 8
+	void opCodeCB0x74();//LD (HL), H; 8
+	void opCodeCB0x75();//LD (HL), L; 8
+	void opCodeCB0x76();//HALT; 4
+	void opCodeCB0x77();//LD (HL), A; 8
+	void opCodeCB0x78();//LD A, B; 4
+	void opCodeCB0x79();//LD A, C; 4
+	void opCodeCB0x7A();//LD A, D; 4
+	void opCodeCB0x7B();//LD A, E; 4
+	void opCodeCB0x7C();//LD A, H; 4
+	void opCodeCB0x7D();//LD A, L; 4
+	void opCodeCB0x7E();//LD A, (HL); 8
+	void opCodeCB0x7F();//LD A, A; 4
+
+	void opCodeCB0x80();//ADD A, B; 4
+	void opCodeCB0x81();//ADD A, C; 4
+	void opCodeCB0x82();//ADD A, D; 4
+	void opCodeCB0x83();//ADD A, E; 4
+	void opCodeCB0x84();//ADD A, H; 4
+	void opCodeCB0x85();//ADD A, L; 4
+	void opCodeCB0x86();//ADD A, (HL); 8
+	void opCodeCB0x87();//ADD A, A; 4
+	void opCodeCB0x88();//ADC A, B; 4
+	void opCodeCB0x89();//ADC A, C; 4
+	void opCodeCB0x8A();//ADC A, D; 4
+	void opCodeCB0x8B();//ADC A, E; 4
+	void opCodeCB0x8C();//ADC A, H; 4
+	void opCodeCB0x8D();//ADC A, L; 4
+	void opCodeCB0x8E();//ADC A, (HL); 8
+	void opCodeCB0x8F();//ADC A, A; 4
+
+	void opCodeCB0x90();//SUB B; 4
+	void opCodeCB0x91();//SUB C; 4
+	void opCodeCB0x92();//SUB D; 4
+	void opCodeCB0x93();//SUB E; 4
+	void opCodeCB0x94();//SUB H; 4
+	void opCodeCB0x95();//SUB L; 4
+	void opCodeCB0x96();//SUB (HL); 8
+	void opCodeCB0x97();//SUB A; 4
+	void opCodeCB0x98();//SBC A, B; 4
+	void opCodeCB0x99();//SBC A, C; 4
+	void opCodeCB0x9A();//SBC A, D; 4
+	void opCodeCB0x9B();//SBC A, E; 4
+	void opCodeCB0x9C();//SBC A, H; 4
+	void opCodeCB0x9D();//SBC A, L; 4
+	void opCodeCB0x9E();//SBC A, (HL); 8
+	void opCodeCB0x9F();//SBC A, A; 4
+
+	void opCodeCB0xA0();//AND B; 4
+	void opCodeCB0xA1();//AND C; 4
+	void opCodeCB0xA2();//AND D; 4
+	void opCodeCB0xA3();//AND E; 4
+	void opCodeCB0xA4();//AND H; 4
+	void opCodeCB0xA5();//AND L; 4
+	void opCodeCB0xA6();//AND (HL); 8
+	void opCodeCB0xA7();//AND A; 4
+	void opCodeCB0xA8();//XOR B; 4
+	void opCodeCB0xA9();//XOR C; 4
+	void opCodeCB0xAA();//XOR D; 4
+	void opCodeCB0xAB();//XOR E; 4
+	void opCodeCB0xAC();//XOR H; 4
+	void opCodeCB0xAD();//XOR L; 4
+	void opCodeCB0xAE();//XOR (HL); 8
+	void opCodeCB0xAF();//XOR A; 4
+
+	void opCodeCB0xB0();//OR B; 4
+	void opCodeCB0xB1();//OR C; 4
+	void opCodeCB0xB2();//OR D; 4
+	void opCodeCB0xB3();//OR E; 4
+	void opCodeCB0xB4();//OR H; 4
+	void opCodeCB0xB5();//OR L; 4
+	void opCodeCB0xB6();//OR (HL); 8
+	void opCodeCB0xB7();//OR A; 4
+	void opCodeCB0xB8();//CP B; 4
+	void opCodeCB0xB9();//CP C; 4
+	void opCodeCB0xBA();//CP D; 4
+	void opCodeCB0xBB();//CP E; 4
+	void opCodeCB0xBC();//CP H; 4
+	void opCodeCB0xBD();//CP L; 4
+	void opCodeCB0xBE();//CP (HL); 8
+	void opCodeCB0xBF();//CP A; 4
+
+	void opCodeCB0xC0();//RET NZ; 20/8
+	void opCodeCB0xC1();//POP BC; 12
+	void opCodeCB0xC2();//JP NZ, a16; 16
+	void opCodeCB0xC3();//JP a16; 16
+	void opCodeCB0xC4();//CALL NZ, a16
+	void opCodeCB0xC5();//PUSH BC
+	void opCodeCB0xC6();//ADD A, d8
+	void opCodeCB0xC7();//RST 00H; 16
+	void opCodeCB0xC8();//RET Z; 20/8
+	void opCodeCB0xC9();//RET; 16
+	void opCodeCB0xCA();//JP Z, a16; 16/12
+	void opCodeCB0xCB();//PREFIX CB; 4
+	void opCodeCB0xCC();//CALL Z, a16; 24/12
+	void opCodeCB0xCD();//CALL a16; 24
+	void opCodeCB0xCE();//ADC A, d8; 8
+	void opCodeCB0xCF();//RST 08H; 16
+
+	void opCodeCB0xD0();//RET NC; 20/8
+	void opCodeCB0xD1();//POP DE; 12
+	void opCodeCB0xD2();//JP NC, a16; 16/12
+	void opCodeCB0xD3();//BLANK
+	void opCodeCB0xD4();//CALL NC, a16; 24/12
+	void opCodeCB0xD5();//PUSH DE; 16
+	void opCodeCB0xD6();//SUB d8; 8
+	void opCodeCB0xD7();//RST 10H; 16
+	void opCodeCB0xD8();//RET C; 20/8
+	void opCodeCB0xD9();//RETI; 16
+	void opCodeCB0xDA();//JP C, a16; 16/12
+	void opCodeCB0xDB();//BLANK
+	void opCodeCB0xDC();//CALL C, a16; 24/12
+	void opCodeCB0xDD();//BLANK
+	void opCodeCB0xDE();//SBC A, d8; 8
+	void opCodeCB0xDF();//RST 18H; 16
+
+	void opCodeCB0xE0();//LDH (a8), A; 12
+	void opCodeCB0xE1();//POP HL; 12
+	void opCodeCB0xE2();//LD (C), A; 8
+	void opCodeCB0xE3();//BLANK
+	void opCodeCB0xE4();//BLANK
+	void opCodeCB0xE5();//PUSH HL; 16
+	void opCodeCB0xE6();//AND d8; 8
+	void opCodeCB0xE7();//RST 20H; 16
+	void opCodeCB0xE8();//ADD SP, r8; 16
+	void opCodeCB0xE9();//JP (HL); 4
+	void opCodeCB0xEA();//LD (a16), A; 16
+	void opCodeCB0xEB();//BLANK
+	void opCodeCB0xEC();//BLANK
+	void opCodeCB0xED();//BLANK
+	void opCodeCB0xEE();//XOR d8; 8
+	void opCodeCB0xEF();//RST 28H; 16
+
+	void opCodeCB0xF0();//LDH A, (a8); 12
+	void opCodeCB0xF1();//POP AF; 12
+	void opCodeCB0xF2();//LD A, (C); 8
+	void opCodeCB0xF3();//DI; 4
+	void opCodeCB0xF4();//BLANK
+	void opCodeCB0xF5();//PUSH AF; 16
+	void opCodeCB0xF6();//OR d8; 8
+	void opCodeCB0xF7();//RST 30H; 16
+	void opCodeCB0xF8();//LD HL, SP+r8; 12
+	void opCodeCB0xF9();//LD SP, HL; 8
+	void opCodeCB0xFA();//LD A, (a16); 16
+	void opCodeCB0xFB();//EI; 4
+	void opCodeCB0xFC();//BLANK
+	void opCodeCB0xFD();//BLANK
+	void opCodeCB0xFE();//CP d8; 8
+	void opCodeCB0xFF();//RST 38H; 16
+
+
 };
 #endif
