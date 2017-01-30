@@ -9,6 +9,7 @@ Emulator emu;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+
 /*int main() {
 	Emulator emu;
 
@@ -51,10 +52,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 		0,                              // Optional window styles.
 		CLASS_NAME,                     // Window class
 		TEXT("Visual Gameboy Color"),    // Window text
-		WS_OVERLAPPEDWINDOW,            // Window style
+		WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,            // Window style
 
 								  // Size and position
-		CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+		CW_USEDEFAULT, CW_USEDEFAULT, 816, 615,
 
 		NULL,       // Parent window    
 		NULL,       // Menu
@@ -67,10 +68,27 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 	HWND mainView = CreateWindowEx(0, "STATIC", NULL, Style, 0, 0, 800, 600, hwnd, NULL, hInstance, NULL);
 	
 	//define the sfml view
+	sf::Vector2u windowSize;
+	sf::FloatRect pixelSize;
+
 	sf::RenderWindow SFMLView(mainView);
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
 	SFMLView.setVerticalSyncEnabled(true);
+
+	const unsigned int W = 160;
+	const unsigned int H = 144; // you can change this to full window size later
+
+	sf::Uint8* pixels = new sf::Uint8[W*H * 4];
+
+	sf::Texture texture;
+	texture.create(W, H);
+
+	sf::Sprite sprite; // needed to draw the texture on screen
+
+
+
+
 	if (hwnd == NULL)
 	{
 		return 0;
@@ -90,9 +108,61 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 		else {
 			//clear view
 			SFMLView.clear();
+			////////////////
+			
+			pixels = emu.gpu->get_Texture(pixels);
 
+			/* test code for making blue side borders and green top and bottom borders
+			for(int i = 0; i < W*H*4; i += 4) {
+				pixels[i] = 255;
+				pixels[i+1] = 1;
+				pixels[i + 2] = 0;
+				pixels[i + 3] = 255;
+				if (i % (W * 4) == 159*4) {
+					pixels[i] = 0;
+					pixels[i + 1] = 0;
+					pixels[i + 2] = 255;
+					pixels[i + 3] = 255;
+				}
+				if (i % (W * 4) == 0) {
+					pixels[i] = 0;
+					pixels[i + 1] = 0;
+					pixels[i + 2] = 255;
+					pixels[i + 3] = 255;
+				}
+			}
+			for (int i = 0; i < W*4; i += 4) {
+				pixels[i] = 0;
+				pixels[i + 1] = 255;
+				pixels[i + 2] = 0;
+				pixels[i + 3] = 255;
+			}
+
+			for (int i = 160*143*4; i < W * H * 4; i += 4) {
+				pixels[i] = 0;
+				pixels[i + 1] = 255;
+				pixels[i + 2] = 0;
+				pixels[i + 3] = 255;
+			}*/
+
+			cout << "Setup pixel coloring" << endl;
+			texture.update(pixels);
+			sprite.setTexture(texture);
+			
+			//get size of window and sprite in pixels
+			windowSize = SFMLView.getSize();
+			pixelSize = sprite.getLocalBounds();
+
+			//get scale with which to change the sprite
+			windowSize.x = windowSize.x / pixelSize.width;
+			windowSize.y = windowSize.y / pixelSize.height;
+
+			sprite.setScale(sf::Vector2f(windowSize));
+
+			SFMLView.draw(sprite);
+			////////
 			//draw functions go here
-			SFMLView.draw(shape);
+			//SFMLView.draw(shape);
 			//write to screen
 			SFMLView.display();
 		}

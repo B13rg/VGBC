@@ -9,3 +9,13 @@ GPU::GPU(MEM* MEM) {
 }
 
 GPU::~GPU() {}
+
+sf::Uint8 * GPU::get_Texture(sf::Uint8 * pixels)
+{
+	//calculate each pixel on 160x144 screen
+
+
+
+	return pixels;
+}
+

@@ -4,6 +4,7 @@
 //#include "MEM.h"
 //#include "Emulator.h"
 #include "DMGCPU.h"
+#include <SFML/Graphics.hpp>
 
 using namespace std;
 
@@ -22,5 +23,7 @@ class GPU{
 	public:
 		GPU(MEM*);
 		~GPU();
+
+		sf::Uint8* get_Texture(sf::Uint8 *pixels);
 };
 #endif
