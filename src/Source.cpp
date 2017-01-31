@@ -77,7 +77,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 	SFMLView.setVerticalSyncEnabled(true);
 
 	const unsigned int W = 160;
-	const unsigned int H = 144; // you can change this to full window size later
+	const unsigned int H = 144;
 
 	sf::Uint8* pixels = new sf::Uint8[W*H * 4];
 
@@ -110,7 +110,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 			SFMLView.clear();
 			////////////////
 			
-			pixels = emu.gpu->get_Texture(pixels);
+			emu.update(pixels);
 
 			/* test code for making blue side borders and green top and bottom borders
 			for(int i = 0; i < W*H*4; i += 4) {

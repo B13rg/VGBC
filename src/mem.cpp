@@ -21,9 +21,8 @@ uint8_t hram[0x80];
 
 MEM::MEM(){
 	//load rom
-	loadRom("test.gb");
+	//loadRom("test.gb");
 	//run bios
-
 	biosLoaded = 1;
 }
 
@@ -35,8 +34,9 @@ MEM::~MEM() {}
 
 uint8_t MEM::ReadByte(uint16_t addr){
 	
-	if(addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
-		return rom[0][addr];
+	if (addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
+		return BIOS[addr];
+		//return rom[0][addr];
 	
 	else if(addr >= 0x4000 && addr <= 0x7FFF)	//Area of switchable rom banks
 		return rom[activeRomBank-1][addr];
@@ -85,11 +85,11 @@ void MEM::WriteByte(uint16_t addr, uint8_t data){
 	else if(addr == 0xFF04)	//if written to, sets it to 0
 		zram[0x0004] = 0;
 	
-	else if(addr >= 0xFEA0 && addr < 0xFEFF)	//read only stuff
+	else if (addr >= 0xFEA0 && addr < 0xFEFF)	//read only stuff
 		return;
-	
-	else if(addr >= 0x8000 && addr <= 0x9FFF)	//write to video ram
-		vram[addr-0x8000] = data;
+
+	else if (addr >= 0x8000 && addr <= 0x9FFF)	//write to video ram
+		vram[addr - 0x2000] = data;
 	
 	else if(addr >= 0xA000 && addr <= 0xBFFF)	//write to external ram
 		eram[addr-0xA000] = data;	

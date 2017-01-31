@@ -3,10 +3,16 @@
 
 //#include "MEM.h"
 //#include "Emulator.h"
+#include <cstdint>
 #include "DMGCPU.h"
 #include <SFML/Graphics.hpp>
 
 using namespace std;
+
+#define STATE_OAM_READ 2
+#define STATE_VRAM_READ 3
+#define STATE_HBLANK 0
+#define STATE_VBLANK 1
 
 class GPU{
 	private:
@@ -19,11 +25,38 @@ class GPU{
 		bool spriteEnable;	//bit 1: Bit 5 for sprites
 		bool bgDisplay;		//bit 0: Bit 5 and 1 for background 0=off, 1=on
 
+		bool lockVram;
+		bool vblankStart;
+
+		uint8_t stateclock;
+		uint8_t line;
+
+		uint8_t tiles[384][8][8];
+		uint8_t vram[0x2000];
+		uint8_t scx, scy;	//scroll registers
+		uint8_t wndx, wndy;	//window registers
+		uint8_t bgbuffer[256][256];
+		sf::Uint8 paletteref[4][4];
+		uint8_t palette[4];
+
+		void writeScanLine(sf::Uint8 *pixels);
+
+
+		
 		MEM *mem;
 	public:
 		GPU(MEM*);
 		~GPU();
 
-		sf::Uint8* get_Texture(sf::Uint8 *pixels);
+		void WriteByteVram(uint16_t addr, uint8_t data);
+		void WriteReg(uint16_t addr, uint8_t data);
+		uint8_t ReadReg(uint16_t addr);
+		void UpdateTile(uint16_t addr, uint8_t data);
+
+		void Tick(uint32_t clock, sf::Uint8 *);
+
+
+		void get_Texture(sf::Uint8 *pixels);
+		uint8_t state;
 };
 #endif

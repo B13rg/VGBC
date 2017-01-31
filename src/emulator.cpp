@@ -14,6 +14,7 @@ Emulator::Emulator(){
 	gpu = new GPU(mem);
 	cyclesThisUpdate = 0;
 	timerCounter = 1024;
+	run == true;
 	platform();
 }
 
@@ -23,25 +24,30 @@ void Emulator::platform(){
 
 }
 
-void Emulator::update(){
-	int cycles = 0;
+void Emulator::update(sf::Uint8 * pixels){
+
 	
-	while(cyclesThisUpdate < MAXCYCLES){
-		//ExecuteNextOpcode();
+	//while(cyclesThisUpdate < MAXCYCLES){
+	if(run)
+
+	for (int i = 0; i < 256; i++) {
+		//ExecuteNextOpcode
+		Cpu->tick();
 		cyclesThisUpdate += Cpu->getClock();
-		updateTimers(cycles);
-		//updateGraphics(cycles);
+		updateTimers(cyclesThisUpdate);
+		gpu->Tick(cyclesThisUpdate, pixels);
 		doInterupts();
 	}
-	//RenderScreen();
-
+	run = false;
 	mem->WriteByte(0xFF00, 0);	//reset controller input
+
+	gpu->get_Texture(pixels);
 }
 
 void Emulator::updateTimers(int cycles){
 	uint8_t temp;
 	
-	DoDividerRegister();
+	DoDividerRegister(cycles);
 	
 	if(true){	//clock enabled
 		timerCounter -= cycles;
@@ -59,8 +65,8 @@ void Emulator::updateTimers(int cycles){
 	
 }
 
-void Emulator::DoDividerRegister(){
-	dividerRegister += cycles;
+void Emulator::DoDividerRegister(int cycles){
+	dividerCounter += cycles;
 	
 	if(dividerCounter >= 255){
 		dividerCounter = 0;

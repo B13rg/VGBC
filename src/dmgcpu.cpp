@@ -10,13 +10,16 @@ using namespace std;
 CPU::CPU(MEM* MEM){
 	mem = MEM;
 	opCodeInit();
+	memset(&Registers, 0, sizeof(Registers));
 	Registers.SP.word = 0xFFFE;
-	tick();
+	
 }
 
 CPU::~CPU() {}
 
-void CPU::tick() {}
+void CPU::tick() {
+	(this->*opCodes[mem->ReadByte(Registers.PC.word)])();
+}
 
 uint32_t CPU::getClock(){
 	return Clock.m;
@@ -60,7 +63,7 @@ void CPU::resetFlags(){	//sets all flags to zero
 }
 
 void CPU::opCodeInit(){	//sets up OpCode connections
-	opCodes[0x00] = &CPU::opCode0x00;
+    opCodes[0x00] = &CPU::opCode0x00;
     opCodes[0x01] = &CPU::opCode0x01;
     opCodes[0x02] = &CPU::opCode0x02;
     opCodes[0x03] = &CPU::opCode0x03;

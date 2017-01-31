@@ -9,16 +9,16 @@ using namespace std;
 
 class Emulator{
 	private:
-		void update();
+		
 
 		const int MAXCYCLES = 69905;
 		int timerCounter;
 		int cyclesThisUpdate;
-		int cycles;
-		int dividerRegister;
+		//uint32_t cycles;
+		//int dividerRegister;
 		int dividerCounter;
 		int interruptMaster;
-	
+		bool run;
 	public:
 		Emulator();
 		~Emulator();
@@ -28,8 +28,10 @@ class Emulator{
 		CPU* Cpu;
 		void platform();
 
+		void update(sf::Uint8 *);
+
 		void updateTimers(int);
-		void DoDividerRegister();
+		void DoDividerRegister(int);
 		void setClockFreq();
 		void requestInterrupt(int);
 		void doInterupts();
