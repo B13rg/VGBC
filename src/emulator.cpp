@@ -14,7 +14,7 @@ Emulator::Emulator(){
 	gpu = new GPU(mem);
 	cyclesThisUpdate = 0;
 	timerCounter = 1024;
-	run == true;
+	run = true;
 	platform();
 }
 

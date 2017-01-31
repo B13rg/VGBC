@@ -28,6 +28,9 @@ class GPU{
 		bool lockVram;
 		bool vblankStart;
 
+		sf::Uint8 * slate;
+
+
 		uint8_t stateclock;
 		uint8_t line;
 
@@ -40,6 +43,9 @@ class GPU{
 		uint8_t palette[4];
 
 		void writeScanLine(sf::Uint8 *pixels);
+		void RenderTile();
+		void getColor(int, uint16_t, uint8_t *);
+		void RenderSprite();
 
 
 		
