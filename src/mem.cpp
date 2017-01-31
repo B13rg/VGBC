@@ -23,6 +23,8 @@ MEM::MEM(){
 	//load rom
 	//loadRom("test.gb");
 	//run bios
+	//load bios into memory
+	memcpy(rom[0], bios, sizeof(*bios));
 	biosLoaded = 1;
 }
 
@@ -35,7 +37,7 @@ MEM::~MEM() {}
 uint8_t MEM::ReadByte(uint16_t addr){
 	
 	if (addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
-		return BIOS[addr];
+		return rom[0][addr];
 		//return rom[0][addr];
 	
 	else if(addr >= 0x4000 && addr <= 0x7FFF)	//Area of switchable rom banks
