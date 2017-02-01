@@ -18,7 +18,6 @@ class Emulator{
 		//int dividerRegister;
 		int dividerCounter;
 		int interruptMaster;
-		bool run;
 	public:
 		Emulator();
 		~Emulator();

@@ -14,8 +14,7 @@ Emulator::Emulator(){
 	gpu = new GPU(mem);
 	cyclesThisUpdate = 0;
 	timerCounter = 1024;
-	run = true;
-	platform();
+	//platform();
 }
 
 Emulator::~Emulator() {}
@@ -27,10 +26,7 @@ void Emulator::platform(){
 void Emulator::update(sf::Uint8 * pixels){
 
 	
-	//while(cyclesThisUpdate < MAXCYCLES){
-	if(run)
-
-	for (int i = 0; i < 256; i++) {
+	while(cyclesThisUpdate < MAXCYCLES){
 		//ExecuteNextOpcode
 		Cpu->tick();
 		cyclesThisUpdate += Cpu->getClock();
@@ -38,10 +34,10 @@ void Emulator::update(sf::Uint8 * pixels){
 		gpu->Tick(cyclesThisUpdate, pixels);
 		doInterupts();
 	}
-	run = false;
+
 	mem->WriteByte(0xFF00, 0);	//reset controller input
 
-	gpu->get_Texture(pixels);
+	//gpu->get_Texture(pixels);
 }
 
 void Emulator::updateTimers(int cycles){

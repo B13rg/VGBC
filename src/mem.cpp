@@ -24,7 +24,7 @@ MEM::MEM(){
 	//loadRom("test.gb");
 	//run bios
 	//load bios into memory
-	memcpy(rom[0], bios, sizeof(*bios));
+	memcpy(rom[0], BIOS, sizeof(*BIOS));
 	biosLoaded = 1;
 }
 
