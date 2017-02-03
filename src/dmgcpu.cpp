@@ -11,18 +11,16 @@ CPU::CPU(MEM* MEM){
 	mem = MEM;
 	opCodeInit();
 	memset(&Registers, 0, sizeof(Registers));
-	Registers.SP.word = 0xFFFE;
-	
 }
 
 CPU::~CPU() {}
 
 void CPU::tick() {
-	(this->*opCodes[mem->ReadByte(Registers.PC.word)])();
+		(this->*opCodes[mem->ReadByte(Registers.PC.word)])();
 }
 
 uint32_t CPU::getClock(){
-	return Clock.m;
+	return Clock.t;
 }
 
 uint16_t CPU::getPC() {
@@ -267,7 +265,7 @@ void CPU::opCodeInit(){	//sets up OpCode connections
     opCodes[0xC9] = &CPU::opCode0xC9;
     opCodes[0xCA] = &CPU::opCode0xCA;
 
-    opCodes[0xCA] = &CPU::opCode0xCB; //CB switch function here
+    opCodes[0xCB] = &CPU::opCode0xCB; //CB switch function here
 
     opCodes[0xCC] = &CPU::opCode0xCC;
     opCodes[0xCD] = &CPU::opCode0xCD;
@@ -845,7 +843,21 @@ void CPU::opCode0x16(){	//LD D, D8; 8
 	Registers.PC.word += 2;
 }
 
-void CPU::opCode0x17() {}//RLA; 4
+void CPU::opCode0x17() {	//RLA; 4
+	//rotate a left through carry
+	Flag.C = (Registers.AF.hi >> 7) & 1;
+	Registers.AF.hi = Registers.AF.hi << 1;
+	
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	Flag.N = 0;
+	Flag.H = 0;
+
+	Clock.m = 2;
+	Clock.t = 8;
+	Registers.PC.word += 2;
+}
 
 void CPU::opCode0x18(){	//JR r8; 12
 	Registers.PC.word += (uint8_t)(mem->ReadByte(Registers.PC.word + 1)) + 2;
@@ -924,15 +936,34 @@ void CPU::opCode0x1E(){	//LD E, d8; 8
 	Registers.PC.word += 2;
 }
 
-void CPU::opCode0x1F() {}//RRA; 4
+void CPU::opCode0x1F() {	//RRA; 4
+	//rotate a left through carry
+	Flag.C = (Registers.AF.hi ) & 1;
+	Registers.AF.hi = Registers.AF.hi >> 1;
 
-void CPU::opCode0x20(){	//JR NZ, r8; 12/8
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	Flag.N = 0;
+	Flag.H = 0;
+
 	Clock.m = 2;
 	Clock.t = 8;
-	if(!Flag.Z){
-		Registers.PC.word += (uint8_t)(mem->ReadByte(Registers.PC.word + 1)) + 2;
+	Registers.PC.word += 2;
+}
+void CPU::opCode0x20(){	//JR NZ, r8; 12/8
+	if (!Flag.Z)
+	{
+		//Zero flag is set. Jump.
+		Registers.PC.word += (int8_t)(mem->ReadByte(Registers.PC.word + 1)) + 2;
 		Clock.t = 12;
 	}
+	else
+	{
+		Registers.PC.word += 2;
+		Clock.t = 8;
+	}
+	Clock.m = 2;
 }
 
 void CPU::opCode0x21(){	//LD HL, d16; 12
@@ -1036,13 +1067,17 @@ void CPU::opCode0x27(){	//DAA; 4
 }
 
 void CPU::opCode0x28(){	//JR Z, r8; 12/8
-	Clock.m = 2;
-	Clock.t = 8;
-
-	if(Flag.Z){
-		Registers.PC.word += (uint8_t)(mem->ReadByte(Registers.PC.word + 1)) + 2;
+	if (Flag.Z)
+	{
+		//Zero flag is set. Jump.
+		Registers.PC.word += (int8_t)(mem->ReadByte(Registers.PC.word + 1) + 2);
 		Clock.t = 12;
 	}
+	else {
+		Registers.PC.word += 2;
+		Clock.t = 8;
+	}
+	Clock.m = 2;
 }
 
 void CPU::opCode0x29(){	//ADD HL, HL; 8
@@ -1129,13 +1164,18 @@ void CPU::opCode0x2F(){	//CPL; 4
 }
 
 void CPU::opCode0x30(){	//JR NC, r8; 12/8
-		Clock.m = 2;
-	Clock.t = 8;
-
-	if(!Flag.C){
-		Registers.PC.word += (uint8_t)(mem->ReadByte(Registers.PC.word + 1)) + 2;
+	if (!Flag.C)
+	{
+		Registers.PC.word += (int8_t)mem->ReadByte(Registers.PC.word + 1) + 2; //Signed 8-bit value
 		Clock.t = 12;
 	}
+	else
+	{
+		Registers.PC.word += 2; //2 byte instruction
+		Clock.t = 8;
+	}
+
+	Clock.m = 3;
 }
 
 void CPU::opCode0x31(){	//LD SP, d16; 12
@@ -1219,13 +1259,17 @@ void CPU::opCode0x37(){	//SCF; 4
 }
 
 void CPU::opCode0x38(){	//JR C, r8; 12/8
-	Clock.m = 2;
-	Clock.t = 8;
-
-	if(Flag.C){
-		Registers.PC.word += (uint8_t)(mem->ReadByte(Registers.PC.word + 1)) + 2;
+	if (Flag.C)
+	{
+		//Zero flag is set. Jump.
+		Registers.PC.word += (int8_t)mem->ReadByte(Registers.PC.word + 1) + 2;
 		Clock.t = 12;
 	}
+	else {
+		Registers.PC.word += 2;
+		Clock.t = 8;
+	}
+	Clock.m = 2;
 }
 
 void CPU::opCode0x39(){	//ADD HL, SP; 8
@@ -2741,7 +2785,17 @@ void CPU::opCode0xBF(){	//CP A; 4
 	Registers.PC.word += 1;
 }
 
-void CPU::opCode0xC0() {}//RET NZ; 20/8
+void CPU::opCode0xC0() {	//RET NZ; 20/8
+	Registers.PC.word += 1;
+	Clock.t = 8;
+
+	if (~Flag.Z) {
+		Registers.PC.word = mem->popoffStack();
+		Clock.t = 20;
+	}
+
+	Clock.m = 1;
+}
 
 void CPU::opCode0xC1(){	//POP BC; 12
 	Registers.BC.word = mem->popoffStack();
@@ -2767,7 +2821,18 @@ void CPU::opCode0xC3(){	//JP a16; 16
 	Clock.t = 16;
 }
 
-void CPU::opCode0xC4() {}//CALL NZ, a16
+void CPU::opCode0xC4() {	//CALL NZ, a16
+	Clock.t = 12;
+
+	if (~Flag.Z) {
+		Registers.PC.word = mem->ReadWord(Registers.PC.word + 1);
+		Clock.t = 24;
+	}
+	else
+		Registers.PC.word += 3;
+
+	Clock.m = 24;
+}
 
 void CPU::opCode0xC5(){	//PUSH BC
 	mem->pushtoStack(Registers.BC.word);
@@ -2824,20 +2889,68 @@ void CPU::opCode0xC9(){	//RET; 16
 }
 
 void CPU::opCode0xCA(){	//JP Z, a16; 16/12
-	Clock.t = 12;
-
-	if(Flag.Z == 1){
+	if(Flag.Z){
 		Registers.PC.word = mem->ReadWord(Registers.PC.word + 1);
 		Clock.t = 16;
+	}
+	else {
+		Registers.PC.word += 3;
+		Clock.t = 12;
 	}
 
 	Clock.m = 3;
 }
 
-void CPU::opCode0xCB() {}//PREFIX CB; 4
-void CPU::opCode0xCC() {}//CALL Z, a16; 24/12
-void CPU::opCode0xCD() {}//CALL a16; 24
-void CPU::opCode0xCE() {}//ADC A, d8; 8
+void CPU::opCode0xCB() {	//signal next opcode is cd opcode
+	Registers.PC.word += 1;
+
+	(this->*opCodesCB[mem->ReadByte(Registers.PC.word)])();
+
+	Clock.m += 1;
+	Clock.t += 4;
+}
+void CPU::opCode0xCC() {	//CALL Z, a16; 24/12
+	Clock.t = 12;
+
+	if (Flag.Z) {
+		Registers.PC.word = mem->ReadWord(Registers.PC.word + 1);
+		Clock.t = 24;
+	}
+	else
+		Registers.PC.word += 3;
+
+	Clock.m = 24;
+}
+void CPU::opCode0xCD() {	//CALL a16; 24
+	mem->pushtoStack(Registers.PC.word + 3);
+
+	Registers.PC.word = mem->ReadWord(Registers.PC.word + 1);
+	Clock.t = 24;
+	Clock.m = 3;
+}
+
+void CPU::opCode0xCE() {	//ADC A, d8; 8
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.C = 0;
+
+	uint8_t val = mem->ReadByte(Registers.PC.word+1);
+
+	if (((Registers.AF.hi & 0x0FFF) + (val & 0x0FFF)) > 0x0FFF)
+		Flag.H = 1;
+	if ((Registers.AF.hi + val) > 0x0FFF)
+		Flag.C = 1;
+
+	Registers.AF.hi += val;
+
+	Registers.AF.hi += Flag.C;
+
+	Flag.Z = !Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word++;
+}
 
 void CPU::opCode0xCF(){	//RST 08H; 16
 	mem->pushtoStack(Registers.PC.word);
@@ -2847,7 +2960,17 @@ void CPU::opCode0xCF(){	//RST 08H; 16
 }
 
 
-void CPU::opCode0xD0() {}	//RET NC; 20/8
+void CPU::opCode0xD0() {	//RET NC; 20/8
+	Registers.PC.word += 1;
+	Clock.t = 8;
+
+	if (~Flag.C) {
+		Registers.PC.word = mem->popoffStack();
+		Clock.t = 20;
+	}
+
+	Clock.m = 1;
+}
 
 void CPU::opCode0xD1(){	//POP DE; 12
 	Registers.DE.word = mem->popoffStack();
@@ -2870,7 +2993,18 @@ void CPU::opCode0xD2(){	//JP NC, a16; 16/12
 
 //void CPU::opCode0xD3();//BLANK
 
-void CPU::opCode0xD4() {}//CALL NC, a16; 24/12
+void CPU::opCode0xD4() {	//CALL NC, a16; 24/12
+	Clock.t = 12;
+
+	if (~Flag.C) {
+		Registers.PC.word = mem->ReadWord(Registers.PC.word + 1);
+		Clock.t = 24;
+	}
+	else
+		Registers.PC.word += 3;
+
+	Clock.m = 24;
+}
 
 void CPU::opCode0xD5(){	//PUSH DE; 16
 	mem->pushtoStack(Registers.DE.word);
@@ -2952,7 +3086,25 @@ void CPU::opCode0xDC(){	//CALL C, a16; 24/12
 
 //void CPU::opCode0xDD();//BLANK
 
-void CPU::opCode0xDE() {}//SBC A, d8; 8
+void CPU::opCode0xDE() {	//SBC A, d8; 8
+	Flag.N = 1;
+	Flag.H = 0;
+
+	Registers.AF.hi = Registers.AF.hi - mem->ReadByte(Registers.PC.word+1) + Flag.C;
+
+	Flag.C = 0;
+
+	if ((Registers.AF.hi & 0x0FFF) > 0x0FFF)
+		Flag.H = 1;
+	if (Registers.AF.hi > 0x0FFF)
+		Flag.C = 1;
+
+	Flag.Z = !Registers.AF.hi;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word++;
+}
 
 void CPU::opCode0xDF(){	//RST 18H; 16
 	mem->pushtoStack(Registers.PC.word);
@@ -3218,197 +3370,1710 @@ void CPU::opCode0xFF(){	//RST 38H; 16
 
 
 
-//Start of BC Registers
-void CPU::opCodeCB0x00(){} //NOP; 4
-void CPU::opCodeCB0x01(){} //LD BC, d16; 12
-void CPU::opCodeCB0x02(){} //LD (BC), A; 8
-void CPU::opCodeCB0x03(){} //INC BC; 8
-void CPU::opCodeCB0x04(){} //INC B; 4
-void CPU::opCodeCB0x05(){} //DEC B; 4
-void CPU::opCodeCB0x06(){} //LD B, d8; 8
-void CPU::opCodeCB0x07(){} //RLCA; 4
-void CPU::opCodeCB0x08(){} //LD (a16), SP; 20
-void CPU::opCodeCB0x09(){} //ADD HL, BC; 8
-void CPU::opCodeCB0x0A(){} //LD A, (BC); 8
-void CPU::opCodeCB0x0B(){} //DEC BC; 8
-void CPU::opCodeCB0x0C(){} //INC C; 4
-void CPU::opCodeCB0x0D(){} //DEC C; 4
-void CPU::opCodeCB0x0E(){} //LD C, d8; 8
-void CPU::opCodeCB0x0F(){} //RRCA; 4
+//Start of BC Opcodes
+void CPU::opCodeCB0x00() {
+	uint8_t temp = (Registers.BC.hi << 1);
+	
+	Flag.C = (Registers.BC.hi >> 7) & 1;
+	Registers.BC.hi = temp;
 
-void CPU::opCodeCB0x10(){}//STOP 0; 4
-void CPU::opCodeCB0x11(){}//LD DE, D16; 12
-void CPU::opCodeCB0x12(){}//LD (DE), A; 8
-void CPU::opCodeCB0x13(){}//INC DE; 8
-void CPU::opCodeCB0x14(){}//INC D; 4
-void CPU::opCodeCB0x15(){}//DEC D; 4
-void CPU::opCodeCB0x16(){}//LD D, D8; 8
-void CPU::opCodeCB0x17(){}//RLA; 4
-void CPU::opCodeCB0x18(){}//JR r8; 12
-void CPU::opCodeCB0x19(){}//ADD HL, DE; 8
-void CPU::opCodeCB0x1A(){}//LD A, (DE); 8
-void CPU::opCodeCB0x1B(){}//DEC DE; 8
-void CPU::opCodeCB0x1C(){}//INC E; 4
-void CPU::opCodeCB0x1D(){}//DEC E; 4
-void CPU::opCodeCB0x1E(){}//LD E, d8; 8
-void CPU::opCodeCB0x1F(){}//RRA; 4
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
 
-void CPU::opCodeCB0x20(){}//JR NZ, r8; 12/8
-void CPU::opCodeCB0x21(){}//LD HL, d16; 12
-void CPU::opCodeCB0x22(){}//LD(HL+), A; 8
-void CPU::opCodeCB0x23(){}//INC HL; 8
-void CPU::opCodeCB0x24(){}//INC H; 4
-void CPU::opCodeCB0x25(){}//DEC H; 4
-void CPU::opCodeCB0x26(){}//LD H, d8; 8
-void CPU::opCodeCB0x27(){}//DAA; 4
-void CPU::opCodeCB0x28(){}//JR Z, r8; 12/8
-void CPU::opCodeCB0x29(){}//ADD HL, HL; 8
-void CPU::opCodeCB0x2A(){}//LD A, (HL+); 8
-void CPU::opCodeCB0x2B(){}//DEC HL; 8
-void CPU::opCodeCB0x2C(){}//INC L; 4
-void CPU::opCodeCB0x2D(){}//DEC L; 4
-void CPU::opCodeCB0x2E(){}//LD L, d8; 8
-void CPU::opCodeCB0x2F(){}//CPL; 4
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
 
-void CPU::opCodeCB0x30(){}//JR NC, r8; 12/8
-void CPU::opCodeCB0x31(){}//LD SP, d16; 12
-void CPU::opCodeCB0x32(){}//LD (HL-), A; 8
-void CPU::opCodeCB0x33(){}//INC SP; 8
-void CPU::opCodeCB0x34(){}//INC (HL); 12
-void CPU::opCodeCB0x35(){}//DEC (HL); 12
-void CPU::opCodeCB0x36(){}//LD (HL), d8; 12
-void CPU::opCodeCB0x37(){}//SCF; 4
-void CPU::opCodeCB0x38(){}//JR C, r8; 12/8
-void CPU::opCodeCB0x39(){}//ADD HL, SP; 8
-void CPU::opCodeCB0x3A(){}//LD A, (HL-); 8
-void CPU::opCodeCB0x3B(){}//DEC SP; 8
-void CPU::opCodeCB0x3C(){}//INC A; 4
-void CPU::opCodeCB0x3D(){}//DEC A; 4
-void CPU::opCodeCB0x3E(){}//LD A, d8; 8
-void CPU::opCodeCB0x3F(){}//CCF; 4
+void CPU::opCodeCB0x01() {
+	uint8_t temp = (Registers.BC.lo << 1);
+	
+	Flag.C = (Registers.BC.lo << 7) & 1;
+	Registers.BC.lo = temp;
 
-void CPU::opCodeCB0x40(){}//LD B, B; 4
-void CPU::opCodeCB0x41(){}//LD B, C; 4
-void CPU::opCodeCB0x42(){}//LD B, D; 4
-void CPU::opCodeCB0x43(){}//LD B, E; 4
-void CPU::opCodeCB0x44(){}//LD B, H; 4
-void CPU::opCodeCB0x45(){}//LD B, L; 4
-void CPU::opCodeCB0x46(){}//LD B, (HL); 8
-void CPU::opCodeCB0x47(){}//LD B, A; 4
-void CPU::opCodeCB0x48(){}//LD C, B; 4
-void CPU::opCodeCB0x49(){}//LD C, C; 4
-void CPU::opCodeCB0x4A(){}//LD C, D; 4
-void CPU::opCodeCB0x4B(){}//LD C, E; 4
-void CPU::opCodeCB0x4C(){}//LD C, H; 4
-void CPU::opCodeCB0x4D(){}//LD C, L; 4
-void CPU::opCodeCB0x4E(){}//LD C, (HL); 8
-void CPU::opCodeCB0x4F(){}//LD C, A; 4
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
 
-void CPU::opCodeCB0x50(){}//LD D, B; 4
-void CPU::opCodeCB0x51(){}//LD D, C; 4
-void CPU::opCodeCB0x52(){}//LD D, D; 4
-void CPU::opCodeCB0x53(){}//LD D, E; 4
-void CPU::opCodeCB0x54(){}//LD D, H; 4
-void CPU::opCodeCB0x55(){}//LD D, L; 4
-void CPU::opCodeCB0x56(){}//LD D, (HL); 8
-void CPU::opCodeCB0x57(){}//LD D, A; 4
-void CPU::opCodeCB0x58(){}//LD E, B; 4
-void CPU::opCodeCB0x59(){}//LD E, C; 4
-void CPU::opCodeCB0x5A(){}//LD E, D; 4
-void CPU::opCodeCB0x5B(){}//LD E, E; 4
-void CPU::opCodeCB0x5C(){}//LD E, H; 4
-void CPU::opCodeCB0x5D(){}//LD E, L; 4
-void CPU::opCodeCB0x5E(){}//LD E, (HL); 8
-void CPU::opCodeCB0x5F(){}//LD E, A; 4
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
 
-void CPU::opCodeCB0x60(){}//LD H, B; 4
-void CPU::opCodeCB0x61(){}//LD H, C; 4
-void CPU::opCodeCB0x62(){}//LD H, D; 4
-void CPU::opCodeCB0x63(){}//LD H, E; 4
-void CPU::opCodeCB0x64(){}//LD H, H; 4
-void CPU::opCodeCB0x65(){}//LD H, L; 4
-void CPU::opCodeCB0x66(){}//LD H, (HL); 8
-void CPU::opCodeCB0x67(){}//LD H, A; 4
-void CPU::opCodeCB0x68(){}//LD L, B; 4
-void CPU::opCodeCB0x69(){}//LD L, C; 4
-void CPU::opCodeCB0x6A(){}//LD L, D; 4
-void CPU::opCodeCB0x6B(){}//LD L, E; 4
-void CPU::opCodeCB0x6C(){}//LD L, H; 4
-void CPU::opCodeCB0x6D(){}//LD L, L; 4
-void CPU::opCodeCB0x6E(){}//LD L, (HL); 8
-void CPU::opCodeCB0x6F(){}//LD L, A; 4
+void CPU::opCodeCB0x02() {
+	uint8_t temp = (Registers.DE.hi << 1);
+	
+	Flag.C = (Registers.DE.hi >> 7) & 1;
+	Registers.DE.hi = temp;
 
-void CPU::opCodeCB0x70(){}//LD (HL), B; 8
-void CPU::opCodeCB0x71(){}//LD (HL), C; 8
-void CPU::opCodeCB0x72(){}//LD (HL), D; 8
-void CPU::opCodeCB0x73(){}//LD (HL), E; 8
-void CPU::opCodeCB0x74(){}//LD (HL), H; 8
-void CPU::opCodeCB0x75(){}//LD (HL), L; 8
-void CPU::opCodeCB0x76(){}//HALT; 4
-void CPU::opCodeCB0x77(){}//LD (HL), A; 8
-void CPU::opCodeCB0x78(){}//LD A, B; 4
-void CPU::opCodeCB0x79(){}//LD A, C; 4
-void CPU::opCodeCB0x7A(){}//LD A, D; 4
-void CPU::opCodeCB0x7B(){}//LD A, E; 4
-void CPU::opCodeCB0x7C(){}//LD A, H; 4
-void CPU::opCodeCB0x7D(){}//LD A, L; 4
-void CPU::opCodeCB0x7E(){}//LD A, (HL); 8
-void CPU::opCodeCB0x7F(){
-	Flag.Z = (Registers.##.hilo >> x) & 1;
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x03() {
+	uint8_t temp = (Registers.DE.lo << 1);
+	
+	Flag.C = (Registers.DE.lo >> 7) & 1;
+	Registers.DE.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x04() {
+	uint8_t temp = (Registers.HL.hi << 1);
+	
+	Flag.C = (Registers.HL.hi >> 7) & 1;
+	Registers.HL.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x05() {
+	uint8_t temp = (Registers.HL.lo << 1);
+	
+	Flag.C = (Registers.HL.lo >> 7) & 1;
+	Registers.HL.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x06() {
+	uint8_t value = mem->ReadByte(Registers.HL.word);
+	uint8_t temp = (value << 1);
+	
+	Flag.C = (value >> 7) & 1;
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x07() {
+	uint8_t temp = (Registers.AF.hi << 1);
+	
+	Flag.C = (Registers.AF.hi >> 7) & 1;
+	Registers.AF.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+
+void CPU::opCodeCB0x08() {
+	uint8_t temp = (Registers.BC.hi >> 1);
+	
+	Flag.C = Registers.BC.hi & 1;
+	Registers.BC.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x09() {
+	uint8_t temp = (Registers.BC.lo >> 1);
+	
+	Flag.C = Registers.BC.lo & 1;
+	Registers.BC.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x0A() {
+	uint8_t temp = (Registers.DE.hi >> 1);
+	
+	Flag.C = Registers.DE.hi & 1;
+	Registers.DE.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x0B() {
+	uint8_t temp = (Registers.DE.lo >> 1);
+	
+	Flag.C = Registers.DE.lo & 1;
+	Registers.DE.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x0C() {
+	uint8_t temp = (Registers.HL.hi >> 1);
+	
+	Flag.C = Registers.HL.hi & 1;
+	Registers.HL.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x0D() {
+	uint8_t temp = (Registers.HL.lo >> 1);
+	
+	Flag.C = Registers.HL.lo & 1;
+	Registers.HL.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x0E() {
+	uint8_t value = mem->ReadByte(Registers.HL.word);
+	uint8_t temp = (value >> 1);
+	
+	Flag.C = value & 1;
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x0F() {
+	uint8_t temp = (Registers.AF.hi >> 1);
+	
+	Flag.C = Registers.AF.hi & 1;
+	Registers.AF.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x10() {
+	uint8_t temp = (Registers.BC.hi << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.BC.hi >> 7) & 1;
+	Registers.BC.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x11() {
+	uint8_t temp = (Registers.BC.lo << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.BC.lo << 7) & 1;
+	Registers.BC.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x12() {
+	uint8_t temp = (Registers.DE.hi << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.DE.hi >> 7) & 1;
+	Registers.DE.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x13() {
+	uint8_t temp = (Registers.DE.lo << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.DE.lo >> 7) & 1;
+	Registers.DE.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x14() {
+	uint8_t temp = (Registers.HL.hi << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.HL.hi >> 7) & 1;
+	Registers.HL.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x15() {
+	uint8_t temp = (Registers.HL.lo << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.HL.lo >> 7) & 1;
+	Registers.HL.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x16() {
+	uint8_t value = mem->ReadByte(Registers.HL.word);
+	uint8_t temp = (value << 1);
+	temp |= Flag.C;
+	Flag.C = (value >> 7) & 1;
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x17() {
+	uint8_t temp = (Registers.AF.hi << 1);
+	temp |= Flag.C;
+	Flag.C = (Registers.AF.hi >> 7) & 1;
+	Registers.AF.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x18(){
+	uint8_t temp = (Registers.BC.hi >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.BC.hi & 1;
+	Registers.BC.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x19(){
+	uint8_t temp = (Registers.BC.lo >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.BC.lo & 1;
+	Registers.BC.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x1A(){
+	uint8_t temp = (Registers.DE.hi >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.DE.hi & 1;
+	Registers.DE.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x1B(){
+	uint8_t temp = (Registers.DE.lo >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.DE.lo & 1;
+	Registers.DE.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x1C(){
+	uint8_t temp = (Registers.HL.hi >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.HL.hi & 1;
+	Registers.HL.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x1D(){
+	uint8_t temp = (Registers.HL.lo >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.HL.lo & 1;
+	Registers.HL.lo = temp;
+
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x1E(){
+	uint8_t value = mem->ReadByte(Registers.HL.word);
+	uint8_t temp = (value >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = value & 1;
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x1F(){
+	uint8_t temp = (Registers.AF.hi >> 1);
+	temp |= Flag.C << 7;
+	Flag.C = Registers.AF.hi & 1;
+	Registers.AF.hi = temp;
+
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	Flag.H = 0;
+	Flag.N = 0;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x20() {
+	Flag.C = Registers.BC.hi & 1;
+	Registers.BC.hi = (Registers.BC.hi << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x21() {
+	Flag.C = Registers.BC.lo & 1;
+	Registers.BC.lo = (Registers.BC.lo << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x22() {
+	Flag.C = Registers.DE.hi & 1;
+	Registers.DE.hi = (Registers.DE.hi << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x23() {
+	Flag.C = Registers.DE.lo & 1;
+	Registers.DE.lo = (Registers.DE.lo << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x24() {
+	Flag.C = Registers.HL.hi & 1;
+	Registers.HL.hi = (Registers.HL.hi << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x25() {
+	Flag.C = Registers.HL.lo & 1;
+	Registers.HL.lo = (Registers.HL.lo << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x26() {
+	uint8_t temp = mem->ReadByte(Registers.HL.word);
+	Flag.C = temp & 1;
+	temp = (temp << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x27() {
+	Flag.C = Registers.AF.hi & 1;
+	Registers.AF.hi = (Registers.AF.hi << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x28() {
+	Flag.C = 0;
+	Registers.BC.hi = (Registers.BC.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x29() {
+	Flag.C = 0;
+	Registers.BC.lo = (Registers.BC.lo >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x2A() {
+	Flag.C = 0;
+	Registers.DE.hi = (Registers.DE.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x2B() {
+	Flag.C = 0;
+	Registers.DE.lo = (Registers.DE.lo >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x2C() {
+	Flag.C = 0;
+	Registers.HL.hi = (Registers.HL.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x2D() {
+	Flag.C = 0;
+	Registers.HL.lo = (Registers.HL.lo >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x2E() {
+	uint8_t temp = mem->ReadByte(Registers.HL.word);
+	Flag.C = 0;
+	temp = (temp >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x2F() {
+	Flag.C = 0;
+	Registers.AF.hi = (Registers.AF.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x30(){
+	Registers.BC.hi = ((Registers.BC.hi & 0x0F) << 4 | (Registers.BC.hi & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x31(){
+	Registers.BC.lo = ((Registers.BC.lo & 0x0F) << 4 | (Registers.BC.lo & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x32(){
+	Registers.DE.hi = ((Registers.DE.hi & 0x0F) << 4 | (Registers.DE.hi & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x33(){
+	Registers.DE.lo = ((Registers.DE.lo & 0x0F) << 4 | (Registers.DE.lo & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x34(){
+	Registers.HL.hi = ((Registers.HL.hi & 0x0F) << 4 | (Registers.HL.hi & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x35(){
+	Registers.HL.lo = ((Registers.HL.lo & 0x0F) << 4 | (Registers.HL.lo & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x36(){
+	uint8_t temp = mem->ReadByte(Registers.HL.word);
+	Flag.C = temp & 1;
+	temp = (temp << 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x37(){
+	Registers.AF.hi = ((Registers.AF.hi & 0x0F) << 4 | (Registers.AF.hi & 0xF0) >> 4);
+
+	Flag.C = 0;
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x38(){
+	Flag.C = Registers.BC.hi & 1;
+	Registers.BC.hi = (Registers.BC.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x39(){
+	Flag.C = Registers.BC.lo & 1;
+	Registers.BC.lo = (Registers.BC.lo >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.BC.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x3A(){
+	Flag.C = Registers.DE.hi & 1;
+	Registers.DE.hi = (Registers.DE.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x3B(){
+	Flag.C = Registers.DE.lo & 1;
+	Registers.DE.lo = (Registers.DE.lo >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.DE.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x3C(){
+	Flag.C = Registers.HL.hi & 1;
+	Registers.HL.hi = (Registers.HL.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.hi)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x3D(){
+	Flag.C = Registers.HL.lo & 1;
+	Registers.HL.lo = (Registers.HL.lo >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.HL.lo)
+		Flag.Z = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x3E(){
+	uint8_t temp = mem->ReadByte(Registers.HL.word);
+	Flag.C = temp & 1;
+	temp = (temp >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (temp)
+		Flag.Z = 1;
+
+	mem->WriteByte(Registers.HL.word, temp);
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x3F(){
+	Flag.C = Registers.AF.hi & 1;
+	Registers.AF.hi = (Registers.AF.hi >> 1);
+	Flag.N = 0;
+	Flag.H = 0;
+	Flag.Z = 0;
+	if (Registers.AF.hi)
+		Flag.Z = 1;
+	
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x40(){
+	Flag.Z = (Registers.BC.hi >> 0) & 1;
 	Flag.N = 0;
 	Flag.H = 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word = 2;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x41(){
+	Flag.Z = (Registers.BC.lo >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x42(){
+	Flag.Z = (Registers.DE.hi >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x43(){
+	Flag.Z = (Registers.DE.lo >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x44() {
+	Flag.Z = (Registers.HL.hi >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x45(){
+	Flag.Z = (Registers.HL.lo >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x46(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x47(){
+	Flag.Z = (Registers.AF.hi >> 0) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x48(){
+	Flag.Z = (Registers.BC.hi >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x49(){
+	Flag.Z = (Registers.BC.lo >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x4A(){
+	Flag.Z = (Registers.DE.hi >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x4B(){
+	Flag.Z = (Registers.DE.lo >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x4C(){
+	Flag.Z = (Registers.HL.hi >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x4D(){
+	Flag.Z = (Registers.HL.lo >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x4E(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x4F(){
+	Flag.Z = (Registers.AF.hi >> 1) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x50(){
+	Flag.Z = (Registers.BC.hi >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x51(){
+	Flag.Z = (Registers.BC.lo >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x52(){
+	Flag.Z = (Registers.DE.hi >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x53(){
+	Flag.Z = (Registers.DE.lo >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x54(){
+	Flag.Z = (Registers.HL.hi >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x55(){
+	Flag.Z = (Registers.HL.lo >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x56(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x57(){
+	Flag.Z = (Registers.AF.hi >> 2) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x58(){
+	Flag.Z = (Registers.BC.hi >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x59(){
+	Flag.Z = (Registers.BC.lo >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x5A(){
+	Flag.Z = (Registers.DE.hi >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x5B(){
+	Flag.Z = (Registers.DE.lo >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x5C(){
+	Flag.Z = (Registers.HL.hi >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x5D(){
+	Flag.Z = (Registers.HL.lo >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x5E(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x5F(){
+	Flag.Z = (Registers.AF.hi >> 3) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+
+void CPU::opCodeCB0x60(){
+	Flag.Z = (Registers.BC.hi >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x61(){
+	Flag.Z = (Registers.BC.lo >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x62(){
+	Flag.Z = (Registers.DE.hi >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x63(){
+	Flag.Z = (Registers.DE.lo >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x64(){
+	Flag.Z = (Registers.HL.hi >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x65(){
+	Flag.Z = (Registers.HL.lo >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x66(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x67(){
+	Flag.Z = (Registers.AF.hi >> 4) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x68(){
+	Flag.Z = (Registers.BC.hi >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x69(){
+	Flag.Z = (Registers.BC.lo >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x6A(){
+	Flag.Z = (Registers.DE.hi >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x6B(){
+	Flag.Z = (Registers.DE.lo >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x6C(){
+	Flag.Z = (Registers.HL.hi >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x6D(){
+	Flag.Z = (Registers.HL.lo >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x6E(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x6F(){
+	Flag.Z = (Registers.AF.hi >> 5) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x70(){
+	Flag.Z = (Registers.BC.hi >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x71(){
+	Flag.Z = (Registers.BC.lo >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x72(){
+	Flag.Z = (Registers.DE.hi >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x73(){
+	Flag.Z = (Registers.DE.lo >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x74(){
+	Flag.Z = (Registers.HL.hi >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x75(){
+	Flag.Z = (Registers.HL.lo >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x76(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x77(){
+	Flag.Z = (Registers.AF.hi >> 6) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x78(){
+	Flag.Z = (Registers.BC.hi >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x79(){
+	Flag.Z = (Registers.BC.lo >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x7A(){
+	Flag.Z = (Registers.DE.hi >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x7B(){
+	Flag.Z = (Registers.DE.lo >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x7C(){
+	Flag.Z = (Registers.HL.hi >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x7D(){
+	Flag.Z = (Registers.HL.lo >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x7E(){
+	Flag.Z = (mem->ReadByte(Registers.HL.word) >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
+}
+
+void CPU::opCodeCB0x7F(){
+	Flag.Z = (Registers.AF.hi >> 7) & 1;
+	Flag.N = 0;
+	Flag.H = 1;
+
+	Clock.m = 1;
+	Clock.t = 8;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x80() {
 	Registers.BC.hi &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x81() {
 	Registers.BC.lo &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x82() {
 	Registers.DE.hi &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x83() {
 	Registers.DE.lo &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x84() {
 	Registers.HL.hi &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x85() {
 	Registers.HL.lo &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x86() {
@@ -3418,65 +5083,65 @@ void CPU::opCodeCB0x86() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x87() {
 	Registers.AF.hi &= ~(1 << 0);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }//RST 00H; 16
 
 void CPU::opCodeCB0x88() {
 	Registers.BC.hi &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x89() {
 	Registers.BC.lo &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x8A() {
 	Registers.DE.hi &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x8B() {
 	Registers.DE.lo &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x8C() {
 	Registers.HL.hi &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x8D() {
 	Registers.HL.lo &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x8E() {
@@ -3486,65 +5151,65 @@ void CPU::opCodeCB0x8E() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x8F() {
 	Registers.AF.hi &= ~(1 << 1);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x90() {
 	Registers.BC.hi &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x91() {
 	Registers.BC.lo &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x92() {
 	Registers.DE.hi &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x93() {
 	Registers.DE.lo &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x94() {
 	Registers.HL.hi &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x95() {
 	Registers.HL.lo &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x96() {
@@ -3554,65 +5219,65 @@ void CPU::opCodeCB0x96() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x97() {
 	Registers.AF.hi &= ~(1 << 2);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x98() {
 	Registers.BC.hi &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x99() {
 	Registers.BC.lo &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x9A() {
 	Registers.DE.hi &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x9B() {
 	Registers.DE.lo &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x9C() {
 	Registers.HL.hi &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x9D() {
 	Registers.HL.lo &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x9E() {
@@ -3622,65 +5287,65 @@ void CPU::opCodeCB0x9E() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0x9F() {
 	Registers.AF.hi &= ~(1 << 3);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA0() {
 	Registers.BC.hi &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA1() {
 	Registers.BC.lo &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA2() {
 	Registers.DE.hi &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA3() {
 	Registers.DE.lo &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA4() {
 	Registers.HL.hi &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA5() {
 	Registers.HL.lo &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA6() {
@@ -3690,65 +5355,65 @@ void CPU::opCodeCB0xA6() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA7() {
 	Registers.AF.hi &= ~(1 << 4);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA8() {
 	Registers.BC.hi &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xA9() {
 	Registers.BC.lo &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xAA() {
 	Registers.DE.hi &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xAB() {
 	Registers.DE.lo &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xAC() {
 	Registers.HL.hi &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xAD() {
 	Registers.HL.lo &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xAE() {
@@ -3757,65 +5422,65 @@ void CPU::opCodeCB0xAE() {
 	temp &= ~(1 << 5);
 
 	mem->WriteByte(Registers.HL.word, temp);
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xAF() {
 	Registers.AF.hi &= ~(1 << 5);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB0() {
 	Registers.BC.hi &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB1() {
 	Registers.BC.lo &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB2() {
 	Registers.DE.hi &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB3() {
 	Registers.DE.lo &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB4() {
 	Registers.HL.hi &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB5() {
 	Registers.HL.lo &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB6() {
@@ -3825,65 +5490,65 @@ void CPU::opCodeCB0xB6() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
-	Clock.t = 8;
-	Registers.PC.word += 2;
+	Clock.m = 1;
+	Clock.t = 16;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB7() {
 	Registers.AF.hi &= ~(1 << 6);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB8() {
 	Registers.BC.hi &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xB9() {
 	Registers.BC.lo &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xBA() {
 	Registers.DE.hi &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xBB() {
 	Registers.DE.lo &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xBC() {
 	Registers.HL.hi &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xBD() {
 	Registers.HL.lo &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xBE() {
@@ -3893,65 +5558,65 @@ void CPU::opCodeCB0xBE() {
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 16;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xBF() {
 	Registers.AF.hi &= ~(1 << 7);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC0(){
 	Registers.BC.hi |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC1(){
 	Registers.BC.lo |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC2(){
 	Registers.DE.hi |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC3(){
 	Registers.DE.lo |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC4(){
 	Registers.HL.hi |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC5(){
 	Registers.HL.lo |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC6(){
@@ -3961,65 +5626,65 @@ void CPU::opCodeCB0xC6(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC7(){
 	Registers.AF.hi |= 1 << 0;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }//RST 00H; 16
 
 void CPU::opCodeCB0xC8(){
 	Registers.BC.hi |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xC9(){
 	Registers.BC.lo |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xCA(){
 	Registers.DE.hi |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xCB(){
 	Registers.DE.lo |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xCC(){
 	Registers.HL.hi |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xCD(){
 	Registers.HL.lo |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xCE(){
@@ -4029,65 +5694,65 @@ void CPU::opCodeCB0xCE(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xCF(){
 	Registers.AF.hi |= 1 << 1;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD0(){
 	Registers.BC.hi |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD1(){
 	Registers.BC.lo |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD2(){
 	Registers.DE.hi |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD3() {
 	Registers.DE.lo |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD4(){
 	Registers.HL.hi |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD5(){
 	Registers.HL.lo |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD6(){
@@ -4097,65 +5762,65 @@ void CPU::opCodeCB0xD6(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD7(){
 	Registers.AF.hi |= 1 << 2;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD8(){
 	Registers.BC.hi |= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xD9(){
 	Registers.BC.lo |= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xDA(){
 	Registers.DE.hi |= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xDB(){
 	Registers.DE.lo |= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xDC(){
 	Registers.HL.hi|= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xDD() {
 	Registers.HL.lo |= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xDE(){
@@ -4165,65 +5830,65 @@ void CPU::opCodeCB0xDE(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xDF(){
 	Registers.AF.hi |= 1 << 3;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE0(){
 	Registers.BC.hi |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE1(){
 	Registers.BC.lo |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE2(){
 	Registers.DE.hi |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE3() {
 	Registers.DE.lo |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE4() {
 	Registers.HL.hi |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE5(){
 	Registers.HL.lo |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE6(){
@@ -4233,65 +5898,65 @@ void CPU::opCodeCB0xE6(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE7(){
 	Registers.AF.hi |= 1 << 4;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE8(){
 	Registers.BC.hi |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xE9(){
 	Registers.BC.lo |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xEA(){
 	Registers.DE.hi |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xEB() {
 	Registers.DE.lo |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xEC() {
 	Registers.HL.hi |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xED() {
 	Registers.HL.lo |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xEE(){
@@ -4300,65 +5965,65 @@ void CPU::opCodeCB0xEE(){
 	temp |= 1 << 5;
 
 	mem->WriteByte(Registers.HL.word, temp);
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xEF(){
 	Registers.AF.hi |= 1 << 5;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF0(){
 	Registers.BC.hi |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF1(){
 	Registers.BC.lo |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF2(){
 	Registers.DE.hi |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF3(){
 	Registers.DE.lo |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF4() {
 	Registers.HL.hi |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF5(){
 	Registers.HL.lo |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF6(){
@@ -4368,65 +6033,65 @@ void CPU::opCodeCB0xF6(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF7(){
 	Registers.AF.hi |= 1 << 6;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF8(){
 	Registers.BC.hi |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xF9(){
 	Registers.BC.lo |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xFA(){
 	Registers.DE.hi |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xFB(){
 	Registers.DE.lo |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xFC() {
 	Registers.HL.hi |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xFD() {
 	Registers.HL.lo |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xFE(){
@@ -4436,15 +6101,15 @@ void CPU::opCodeCB0xFE(){
 
 	mem->WriteByte(Registers.HL.word, temp);
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 16;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }
 
 void CPU::opCodeCB0xFF(){
 	Registers.AF.hi |= 1 << 7;
 
-	Clock.m = 2;
+	Clock.m = 1;
 	Clock.t = 8;
-	Registers.PC.word += 2;
+	Registers.PC.word += 1;
 }

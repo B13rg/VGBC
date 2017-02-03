@@ -10,10 +10,7 @@ Emulator emu;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
-/*int main() {
-	Emulator emu;
-
-	/* demo image code
+/* demo image code
 	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML works!", sf::Style::None);
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
@@ -31,9 +28,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		window.draw(shape);
 		window.display();
 	}
-	
-	return 0;
-}*/
+*/
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDShow) {
 	//Register the window classname
@@ -130,19 +125,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 					pixels[i + 2] = 255;
 					pixels[i + 3] = 255;
 				}
-			}
-			for (int i = 0; i < W*4; i += 4) {
-				pixels[i] = 0;
-				pixels[i + 1] = 255;
-				pixels[i + 2] = 0;
-				pixels[i + 3] = 255;
-			}
-
-			for (int i = 160*143*4; i < W * H * 4; i += 4) {
-				pixels[i] = 0;
-				pixels[i + 1] = 255;
-				pixels[i + 2] = 0;
-				pixels[i + 3] = 255;
 			}*/
 
 			cout << "Setup pixel coloring" << endl;
@@ -160,9 +142,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 			sprite.setScale(sf::Vector2f(windowSize));
 
 			SFMLView.draw(sprite);
-			////////
-			//draw functions go here
-			//SFMLView.draw(shape);
+	
 			//write to screen
 			SFMLView.display();
 		}
