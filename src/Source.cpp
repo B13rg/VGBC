@@ -2,6 +2,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <Windows.h>
+#include "resource.h"
 
 using namespace std;
 
@@ -39,6 +40,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 	wc.lpfnWndProc = WindowProc;
 	wc.hInstance = hInstance;
 	wc.lpszClassName = CLASS_NAME;
+	wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
+
+	//wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MYICON));
+	//wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MYICON), IMAGE_ICON, 16, 16, 0);
 
 	RegisterClass(&wc);
 
@@ -151,12 +156,83 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 	return 0;
 }
 
+void open_file() {
+	char filename[MAX_PATH];
+	OPENFILENAME ofn;
+	ZeroMemory(&filename, sizeof(filename));
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;  // If you have a window to center over, put its HANDLE here
+	ofn.lpstrFilter = "Text Files\0*.txt\0Any File\0*.*\0";
+	ofn.lpstrFile = filename;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = "Select a File, yo!";
+	ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST;
+
+	if (GetOpenFileNameA(&ofn))
+	{
+		std::cout << "You chose the file \"" << filename << "\"\n";
+	}
+	else
+	{
+		// All this stuff below is to tell you exactly how you messed up above. 
+		// Once you've got that fixed, you can often (not always!) reduce it to a 'user cancelled' assumption.
+		switch (CommDlgExtendedError())
+		{
+		case CDERR_DIALOGFAILURE: std::cout << "CDERR_DIALOGFAILURE\n";   break;
+		case CDERR_FINDRESFAILURE: std::cout << "CDERR_FINDRESFAILURE\n";  break;
+		case CDERR_INITIALIZATION: std::cout << "CDERR_INITIALIZATION\n";  break;
+		case CDERR_LOADRESFAILURE: std::cout << "CDERR_LOADRESFAILURE\n";  break;
+		case CDERR_LOADSTRFAILURE: std::cout << "CDERR_LOADSTRFAILURE\n";  break;
+		case CDERR_LOCKRESFAILURE: std::cout << "CDERR_LOCKRESFAILURE\n";  break;
+		case CDERR_MEMALLOCFAILURE: std::cout << "CDERR_MEMALLOCFAILURE\n"; break;
+		case CDERR_MEMLOCKFAILURE: std::cout << "CDERR_MEMLOCKFAILURE\n";  break;
+		case CDERR_NOHINSTANCE: std::cout << "CDERR_NOHINSTANCE\n";     break;
+		case CDERR_NOHOOK: std::cout << "CDERR_NOHOOK\n";          break;
+		case CDERR_NOTEMPLATE: std::cout << "CDERR_NOTEMPLATE\n";      break;
+		case CDERR_STRUCTSIZE: std::cout << "CDERR_STRUCTSIZE\n";      break;
+		case FNERR_BUFFERTOOSMALL: std::cout << "FNERR_BUFFERTOOSMALL\n";  break;
+		case FNERR_INVALIDFILENAME: std::cout << "FNERR_INVALIDFILENAME\n"; break;
+		case FNERR_SUBCLASSFAILURE: std::cout << "FNERR_SUBCLASSFAILURE\n"; break;
+		default: std::cout << "You cancelled.\n";
+		}
+	}
+}
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	uint8_t controller;
 
 	switch (uMsg)
 	{
+	case WM_CREATE: {
+		HMENU hMenu, hSubMenu;
+
+		hMenu = CreateMenu();
+
+		hSubMenu = CreatePopupMenu();
+		AppendMenu(hSubMenu, MF_STRING, ID_FILE_EXIT, "Load Rom...");
+		AppendMenu(hSubMenu, MF_STRING, ID_FILE_EXIT, "E&xit");
+		AppendMenu(hMenu, MF_STRING | MF_POPUP, (UINT)hSubMenu, "&Load");
+
+		hSubMenu = CreatePopupMenu();
+		AppendMenu(hSubMenu, MF_STRING, ID_STUFF_GO, "&Go");
+		AppendMenu(hMenu, MF_STRING | MF_POPUP, (UINT)hSubMenu, "&Stuff");
+
+		SetMenu(hwnd, hMenu);
+		break;
+	}
+	
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case ID_FILE_EXIT:
+			PostQuitMessage(0);
+			return 0;
+		case ID_LOAD_ROM:
+			open_file();
+		}
+		break;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
