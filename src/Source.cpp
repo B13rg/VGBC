@@ -79,7 +79,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 	const unsigned int W = 160;
 	const unsigned int H = 144;
 
-	sf::Uint8* pixels = new sf::Uint8[W*H * 4];
+	sf::Uint8* pixels = new sf::Uint8[W * H * 4];
 
 	sf::Texture texture;
 	texture.create(W, H);
@@ -112,7 +112,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR lpCmdLine, int nCMDSho
 			
 			emu.update(pixels);
 
-			/* test code for making blue side borders and green top and bottom borders
+			/* test code for making blue side borders and green top and bottom borders 
 			for(int i = 0; i < W*H*4; i += 4) {
 				pixels[i] = 255;
 				pixels[i+1] = 1;

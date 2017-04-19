@@ -1,6 +1,8 @@
 #include <fstream>
 #include <iostream>
 #include <cstdint>
+#include <algorithm>
+#include <cstring>
 #include "DMGCPU.h"
 #include "MEM.h"
 #include "GPU.h"
@@ -21,13 +23,14 @@ uint8_t hram[0x80];
 
 MEM::MEM(){
 	//load rom
-	//loadRom("test.gb");
+	loadRom("Tetris.gb");
 	//run bios
 	//load bios into memory
-	for (int i = 0; i < 256; i++) {
-		rom[0][i] = BIOS[i];
-	}
-	
+	//for (int i = 0; i < 256; i++) {
+	//	rom[0][i] = BIOS[i];
+	//}
+
+	memcpy(memory, BIOS, 0x100);
 	biosLoaded = 1;
 }
 
@@ -38,7 +41,10 @@ MEM::~MEM() {}
 
 
 uint8_t MEM::ReadByte(uint16_t addr){
-	
+	//fixed memory
+	return memory[addr];
+
+	//Old stuff below
 	if (addr >= 0x0000 && addr <= 0x3FFF)		//permanent rom bank
 		return rom[0][addr];
 		//return rom[0][addr];
@@ -86,7 +92,12 @@ uint16_t MEM::ReadWord(uint16_t addr){
 void MEM::WriteByte(uint16_t addr, uint8_t data){
 	if(addr < 0x8000)		//signals bank switch
 		handleBanking(addr, data);
-		
+	memory[addr] = data;
+	return;
+
+
+	//old reading
+	/*
 	else if(addr == 0xFF04)	//if written to, sets it to 0
 		zram[0x0004] = 0;
 	
@@ -119,8 +130,8 @@ void MEM::WriteByte(uint16_t addr, uint8_t data){
 	
 	else if(addr >= 0xFF00 && addr <= 0xFF7F)	//I/O registers
 		zram[addr-0xFF00] = data;
-		
-	return;
+	
+	return;*/
 }
 
 void MEM::WriteWord(uint16_t addr, uint16_t data){
@@ -129,26 +140,44 @@ void MEM::WriteWord(uint16_t addr, uint16_t data){
 }
 
 void MEM::handleBanking(uint16_t addr, uint8_t data){
+	switch (romBankType) {
+		case 1:
+			if (addr >= 0x2000 && addr <= 0x3FFF) {
+				ChangeRomBank(data);
+				}
+	}
+	return;
+	
+	
+	
+	
 	//Enabling ram
 	if(addr < 0x2000)
 		if(romBankType)
 			RAMBankEnable(addr, data);
 	
-	//Rom bank change
+	//Rom bank number
 	else if(addr >= 0x2000 && addr < 0x4000)
 		if(romBankType)
 			ChangeLoRomBank(data);
 	
-	//do ROM or RAM bank change
+	//Ram Bank number/UpperBits of Rom Bank number
 	else if(addr >= 0x4000 && addr < 0x6000)
 		if(romBankType == 1)
 			ChangeHiRomBank(data);
 		else	
 			RamBankChange(data);
-	
+	//Rom/Ram mode select
 	else if(addr >= 0x6000 && addr < 0x8000)
 		if(romBankType == 1)
 			ChangeROMRAMMode(data);
+}
+
+void MEM::ChangeRomBank(uint8_t data)
+{
+	uint8_t banknum = data & 0x1F;
+	for (int i = 0; i < (0x7FFF - 0x4000); i++)
+		memory[0x4000] = rom[banknum][i];
 }
 
 void MEM::RAMBankEnable(uint16_t addr, uint8_t data){
@@ -284,9 +313,10 @@ void MEM::loadRom(string filename){
 			break;		
 	}
 	
-	for(k = 0; k < numBanks; k++)	//copy rom data into banks
-		for(i = 0; i<4000; i++)
-			rom[k][i] = buffer[i+(k*0x4000)];
+	//for(k = 0; k < numBanks; k++)	//copy rom data into banks
+		//for(i = 0; i<0x7FFF; i++)
+		//	memory[i] = buffer[i];
+		memcpy(&memory[0x100], buffer, sizeof(buffer));
 
 	switch(buffer[0x0149]){	//get RAM size
 		case 0x00:		//none
