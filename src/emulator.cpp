@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <cstdint>
-#include "Emulator.h"
-#include "MEM.h"
-#include "GPU.h"
-#include "DMGCPU.h"
+#include "../include/Emulator.h"
+#include "../include/mem.h"
+#include "../include/gpu.h"
+#include "../include/cpu.h"
 
 
 using namespace std;
@@ -23,7 +23,7 @@ void Emulator::platform(){
 
 }
 
-void Emulator::update(sf::Uint8 * pixels){
+void Emulator::update(uint8_t * pixels){
 
 	
 	while(cyclesThisUpdate < MAXCYCLES){
@@ -31,7 +31,7 @@ void Emulator::update(sf::Uint8 * pixels){
 		Cpu->tick();
 		cyclesThisUpdate += Cpu->getClock();
 		updateTimers(cyclesThisUpdate);
-		gpu->Tick(cyclesThisUpdate, pixels);
+		//gpu->Tick(cyclesThisUpdate, pixels);
 		doInterupts();
 	}
 

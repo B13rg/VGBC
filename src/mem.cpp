@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <algorithm>
 #include <cstring>
-#include "DMGCPU.h"
-#include "MEM.h"
-#include "GPU.h"
+#include "../include/cpu.h"
+#include "../include/mem.h"
+#include "../include/gpu.h"
 //#include "Emulator.h"
 
 using namespace std;

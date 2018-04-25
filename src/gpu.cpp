@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cstdint>
-#include "GPU.h"
+#include <cstring>
+#include "../include/gpu.h"
 
 using namespace std;
 
@@ -93,7 +94,7 @@ void GPU::UpdateTile(uint16_t addr, uint8_t data)
 	}
 }
 
-void GPU::Tick(uint32_t clock, sf::Uint8 * pixels)
+void GPU::Tick(uint32_t clock, uint8_t * pixels)
 {
 	stateclock += clock;
 	slate = pixels;
@@ -139,7 +140,7 @@ void GPU::Tick(uint32_t clock, sf::Uint8 * pixels)
 	}
 }
 
-void GPU::get_Texture(sf::Uint8 * pixels)
+void GPU::get_Texture(uint8_t * pixels)
 {
 	//calculate each pixel on 160x144 screen
 	for (int i = 0; i < 144; i++) {
@@ -156,7 +157,7 @@ void GPU::get_Texture(sf::Uint8 * pixels)
 	//return pixels;
 }
 
-void GPU::writeScanLine(sf::Uint8 * pixels)
+void GPU::writeScanLine(uint8_t * pixels)
 {	
 	uint8_t lcdControl = mem->ReadByte(0xFF40);
 
